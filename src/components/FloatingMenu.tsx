@@ -1,4 +1,4 @@
-import { Moon, Sun, Move, ZoomIn, Undo, Redo, Square, Circle, Pencil, Eraser, Download, Settings } from 'lucide-react';
+import { Moon, Sun, Move, ZoomIn, Undo, Redo, Square, Circle, Pencil, Eraser, Settings } from 'lucide-react';
 import { FloatingMenuProps, MenuItem } from '../types';
 
 const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd }: FloatingMenuProps) => {
@@ -16,7 +16,6 @@ const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiv
     actions: [
       { icon: <Undo size={20} />, label: 'Undo' },
       { icon: <Redo size={20} />, label: 'Redo' },
-      { icon: <Download size={20} />, label: 'Export' },
       { icon: <Settings size={20} />, label: 'Settings' },
     ],
   };
@@ -42,26 +41,31 @@ const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiv
         {Object.entries(menuItems).map(([group, items]) => (
           <div key={group} className="flex items-center">
             <div className="flex gap-1">
-              {items.map((item) => (
-                <button
-                  key={item.label}
-                  className={`p-2 rounded-lg transition-colors group relative
-                    ${darkMode 
-                      ? 'hover:bg-white/10 text-white' 
-                      : 'hover:bg-black/10 text-black'}
-                    ${activeTool === item.label.toLowerCase() || nodeTypeToAdd === item.label.toLowerCase() ? 'bg-violet-600' : ''}`}
-                  onClick={item.onClick}
-                >
-                  {item.icon}
-                  <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded
-                    opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap
-                    ${darkMode 
-                      ? 'bg-white text-black' 
-                      : 'bg-black text-white'}`}>
-                    {item.label}
-                  </span>
-                </button>
-              ))}
+              {items.map((item) => {
+                const isActive = activeTool === item.label.toLowerCase() || nodeTypeToAdd === item.label.toLowerCase();
+                return (
+                  <button
+                    key={item.label}
+                    className={`p-2 rounded-lg transition-colors group relative
+                      ${darkMode 
+                        ? isActive ? 'bg-violet-600 text-black' : 'hover:bg-white/10 text-white' 
+                        : isActive ? 'bg-violet-600 text-white' : 'hover:bg-black/10 text-black'}`}
+                    onClick={item.onClick}
+                  >
+                    <span className={`${isActive ?  'text-white' : ''}`}>
+                      {item.icon}
+                    </span>
+                    <span className={`absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded
+                      hidden group-hover:flex opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap
+                      ${darkMode 
+                        ? 'bg-white text-black' 
+                        : 'bg-black text-white'}`}
+                    >
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             {group !== 'actions' && (
               <div className={`h-6 w-px mx-2 ${darkMode ? 'bg-white/20' : 'bg-black/20'}`} />
