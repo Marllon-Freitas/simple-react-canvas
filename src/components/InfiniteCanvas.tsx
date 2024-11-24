@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback} from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { InfiniteCanvasProps, NodeData, Point, Transform } from '../types';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
@@ -6,7 +6,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   nodes,
   onUpdateNode,
   onPlaceNode,
-  nodeTypeToAdd
+  nodeTypeToAdd,
+  activeTool
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -202,7 +203,25 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       setIsDraggingNode(true);
       setLastPosition({ x: e.clientX, y: e.clientY });
     } else {
-      if (onPlaceNode && nodeTypeToAdd) {
+      if (activeTool === 'zoom') {
+        const zoomFactor = e.shiftKey ? 0.9 : 1.1;
+        const newScale = transform.scale * zoomFactor;
+
+        if (newScale < 0.1 || newScale > 3) return;
+
+        const scaleDiff = newScale - transform.scale;
+        const newX = transform.x - (coords.x * scaleDiff);
+        const newY = transform.y - (coords.y * scaleDiff);
+
+        setTransform({
+          x: newX,
+          y: newY,
+          scale: newScale
+        });
+      } else if (activeTool === 'pan') {
+        setIsDragging(true);
+        setLastPosition({ x: e.clientX, y: e.clientY });
+      } else if (onPlaceNode && nodeTypeToAdd) {
         onPlaceNode(coords);
       } else {
         setIsDragging(true);
@@ -251,7 +270,10 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     <canvas
       ref={canvasRef}
       className="w-full h-full touch-none"
-      style={{ background: colors.background }}
+      style={{ 
+        background: colors.background,
+        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : 'default'
+      }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

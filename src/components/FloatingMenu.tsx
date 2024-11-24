@@ -1,17 +1,17 @@
 import { Moon, Sun, Move, ZoomIn, Undo, Redo, Square, Circle, Pencil, Eraser, Download, Settings } from 'lucide-react';
 import { FloatingMenuProps, MenuItem } from '../types';
 
-const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode }: FloatingMenuProps) => {
+const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd }: FloatingMenuProps) => {
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
       { icon: <Pencil size={20} />, label: 'Pencil' },
-      { icon: <Square size={20} />, label: 'Rectangle', onClick: () => onAddNode('square') },
+      { icon: <Square size={20} />, label: 'Square', onClick: () => onAddNode('square') },
       { icon: <Circle size={20} />, label: 'Circle', onClick: () => onAddNode('circle') },
       { icon: <Eraser size={20} />, label: 'Eraser' },
     ],
     view: [
-      { icon: <ZoomIn size={20} />, label: 'Zoom' },
-      { icon: <Move size={20} />, label: 'Pan' },
+      { icon: <ZoomIn size={20} />, label: 'Zoom', onClick: () => setActiveTool(activeTool === 'zoom' ? null : 'zoom') },
+      { icon: <Move size={20} />, label: 'Pan', onClick: () => setActiveTool(activeTool === 'pan' ? null : 'pan') },
     ],
     actions: [
       { icon: <Undo size={20} />, label: 'Undo' },
@@ -48,7 +48,8 @@ const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode }: FloatingMenuProps)
                   className={`p-2 rounded-lg transition-colors group relative
                     ${darkMode 
                       ? 'hover:bg-white/10 text-white' 
-                      : 'hover:bg-black/10 text-black'}`}
+                      : 'hover:bg-black/10 text-black'}
+                    ${activeTool === item.label.toLowerCase() || nodeTypeToAdd === item.label.toLowerCase() ? 'bg-violet-600' : ''}`}
                   onClick={item.onClick}
                 >
                   {item.icon}

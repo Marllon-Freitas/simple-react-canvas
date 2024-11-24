@@ -26,6 +26,9 @@ export interface FloatingMenuProps {
   darkMode: boolean;
   onThemeToggle: () => void;
   onAddNode: (type: 'square' | 'circle') => void;
+  activeTool: 'zoom' | 'pan' | null;
+  nodeTypeToAdd: 'square' | 'circle' | null;
+  setActiveTool: (tool: 'zoom' | 'pan' | null) => void;
 }
 
 export interface InfiniteCanvasProps {
@@ -34,4 +37,5 @@ export interface InfiniteCanvasProps {
   nodeTypeToAdd?: 'square' | 'circle' | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
+  activeTool: 'zoom' | 'pan' | null;
 }

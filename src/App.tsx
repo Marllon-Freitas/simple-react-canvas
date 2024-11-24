@@ -7,9 +7,11 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
+  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | null>(null);
 
   const handleAddNode = (type: 'square' | 'circle') => {
     setNodeTypeToAdd(type);
+    setActiveTool(null);
   };
 
   const handlePlaceNode = (position: Point) => {
@@ -33,12 +35,20 @@ function App() {
     ));
   };
 
+  const handleSetActiveTool = (tool: 'zoom' | 'pan' | null) => {
+    setActiveTool(tool);
+    setNodeTypeToAdd(null);
+  };
+
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
         darkMode={isDarkMode}
         onThemeToggle={() => setIsDarkMode(!isDarkMode)}
         onAddNode={handleAddNode}
+        activeTool={activeTool}
+        setActiveTool={handleSetActiveTool}
+        nodeTypeToAdd={nodeTypeToAdd}
       />
       <InfiniteCanvas 
         darkMode={isDarkMode} 
@@ -46,6 +56,7 @@ function App() {
         onUpdateNode={handleUpdateNode}
         onPlaceNode={handlePlaceNode}
         nodeTypeToAdd={nodeTypeToAdd}
+        activeTool={activeTool}
       />
     </div>
   );
