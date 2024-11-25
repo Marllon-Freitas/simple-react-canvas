@@ -29,6 +29,14 @@ export interface FloatingMenuProps {
   activeTool: 'zoom' | 'pan' | null;
   nodeTypeToAdd: 'square' | 'circle' | null;
   setActiveTool: (tool: 'zoom' | 'pan' | null) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+}
+
+export interface Action {
+  type: 'add' | 'update';
+  node: NodeData;
+  previousPosition?: Point;
 }
 
 export interface InfiniteCanvasProps {
@@ -38,4 +46,5 @@ export interface InfiniteCanvasProps {
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
   activeTool: 'zoom' | 'pan' | null;
+  onMouseUp?: (nodeId: string, previousPosition: Point) => void;
 }

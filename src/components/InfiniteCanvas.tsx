@@ -7,7 +7,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   onUpdateNode,
   onPlaceNode,
   nodeTypeToAdd,
-  activeTool
+  activeTool,
+  onMouseUp
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -16,6 +17,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [lastPosition, setLastPosition] = useState<Point | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
+  const [initialPosition, setInitialPosition] = useState<Point | null>(null);
   
   const colors = {
     background: darkMode ? '#1a1a1a' : '#ffffff',
@@ -202,6 +204,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       setSelectedNode(clickedNode.id);
       setIsDraggingNode(true);
       setLastPosition({ x: e.clientX, y: e.clientY });
+      setInitialPosition(clickedNode.position);
     } else {
       if (activeTool === 'zoom') {
         const zoomFactor = e.shiftKey ? 0.9 : 1.1;
@@ -261,9 +264,13 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   };
 
   const handleMouseUp = () => {
+    if (isDraggingNode && selectedNode && initialPosition) {
+      onMouseUp?.(selectedNode, initialPosition);
+    }
     setIsDragging(false);
     setIsDraggingNode(false);
     setLastPosition(null);
+    setInitialPosition(null);
   };
 
   return (

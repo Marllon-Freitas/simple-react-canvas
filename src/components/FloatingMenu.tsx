@@ -1,7 +1,7 @@
 import { Moon, Sun, Move, ZoomIn, Undo, Redo, Square, Circle, Pencil, Eraser, Settings } from 'lucide-react';
 import { FloatingMenuProps, MenuItem } from '../types';
 
-const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd }: FloatingMenuProps) => {
+const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd, onUndo, onRedo }: FloatingMenuProps) => {
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
       { icon: <Pencil size={20} />, label: 'Pencil' },
@@ -14,8 +14,8 @@ const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiv
       { icon: <Move size={20} />, label: 'Pan', onClick: () => setActiveTool(activeTool === 'pan' ? null : 'pan') },
     ],
     actions: [
-      { icon: <Undo size={20} />, label: 'Undo' },
-      { icon: <Redo size={20} />, label: 'Redo' },
+      { icon: <Undo size={20} />, label: 'Undo', onClick: onUndo },
+      { icon: <Redo size={20} />, label: 'Redo', onClick: onRedo },
       { icon: <Settings size={20} />, label: 'Settings' },
     ],
   };
