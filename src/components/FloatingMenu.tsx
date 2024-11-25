@@ -7,7 +7,7 @@ const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiv
       { icon: <Pencil size={20} />, label: 'Pencil' },
       { icon: <Square size={20} />, label: 'Square', onClick: () => onAddNode('square') },
       { icon: <Circle size={20} />, label: 'Circle', onClick: () => onAddNode('circle') },
-      { icon: <Eraser size={20} />, label: 'Eraser' },
+      { icon: <Eraser size={20} />, label: 'Eraser', onClick: () => setActiveTool(activeTool === 'eraser' ? null : 'eraser') },
     ],
     view: [
       { icon: <ZoomIn size={20} />, label: 'Zoom', onClick: () => setActiveTool(activeTool === 'zoom' ? null : 'zoom') },

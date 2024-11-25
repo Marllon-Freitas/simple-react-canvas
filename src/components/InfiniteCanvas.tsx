@@ -6,6 +6,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   nodes,
   onUpdateNode,
   onPlaceNode,
+  onDeleteNode,
   nodeTypeToAdd,
   activeTool,
   onMouseUp
@@ -201,10 +202,14 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     const coords = getCanvasCoordinates(e.clientX, e.clientY);
     const clickedNode = nodes.find(node => isPointInNode(coords, node));
     if (clickedNode) {
-      setSelectedNode(clickedNode.id);
-      setIsDraggingNode(true);
-      setLastPosition({ x: e.clientX, y: e.clientY });
-      setInitialPosition(clickedNode.position);
+      if (activeTool === 'eraser') {
+        onDeleteNode?.(clickedNode.id);
+      } else {
+        setSelectedNode(clickedNode.id);
+        setIsDraggingNode(true);
+        setLastPosition({ x: e.clientX, y: e.clientY });
+        setInitialPosition(clickedNode.position);
+      }
     } else {
       if (activeTool === 'zoom') {
         const zoomFactor = e.shiftKey ? 0.9 : 1.1;
@@ -279,7 +284,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       className="w-full h-full touch-none"
       style={{ 
         background: colors.background,
-        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : 'default'
+        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : activeTool === 'eraser' ? 'not-allowed' : 'default'
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

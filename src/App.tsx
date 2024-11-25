@@ -7,7 +7,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
-  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | null>(null);
+  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | null>(null);
   const [history, setHistory] = useState<Action[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -42,7 +42,19 @@ function App() {
     ));
   };
 
-  const handleSetActiveTool = (tool: 'zoom' | 'pan' | null) => {
+  const handleDeleteNode = (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setNodes(prev => prev.filter(n => n.id !== nodeId));
+
+      const newAction: Action = { type: 'delete', node };
+      const newHistory = history.slice(0, historyIndex + 1);
+      setHistory([...newHistory, newAction]);
+      setHistoryIndex(newHistory.length);
+    }
+  };
+
+  const handleSetActiveTool = (tool: 'zoom' | 'pan' | 'eraser' | null) => {
     setActiveTool(tool);
     setNodeTypeToAdd(null);
   };
@@ -59,6 +71,8 @@ function App() {
           ? { ...node, position: action.previousPosition! }
           : node
       ));
+    } else if (action.type === 'delete') {
+      setNodes(prev => [...prev, action.node]);
     }
 
     setHistoryIndex(historyIndex - 1);
@@ -76,6 +90,8 @@ function App() {
           ? { ...node, position: action.node.position }
           : node
       ));
+    } else if (action.type === 'delete') {
+      setNodes(prev => prev.filter(node => node.id !== action.node.id));
     }
 
     setHistoryIndex(historyIndex + 1);
@@ -107,7 +123,6 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyIndex, history]);
 
-
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
@@ -125,6 +140,7 @@ function App() {
         nodes={nodes} 
         onUpdateNode={handleUpdateNode}
         onPlaceNode={handlePlaceNode}
+        onDeleteNode={handleDeleteNode}
         nodeTypeToAdd={nodeTypeToAdd}
         activeTool={activeTool}
         onMouseUp={handleMouseUp}

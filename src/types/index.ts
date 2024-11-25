@@ -26,15 +26,15 @@ export interface FloatingMenuProps {
   darkMode: boolean;
   onThemeToggle: () => void;
   onAddNode: (type: 'square' | 'circle') => void;
-  activeTool: 'zoom' | 'pan' | null;
+  activeTool: 'zoom' | 'pan' | 'eraser' | null;
   nodeTypeToAdd: 'square' | 'circle' | null;
-  setActiveTool: (tool: 'zoom' | 'pan' | null) => void;
+  setActiveTool: (tool: 'zoom' | 'pan' | 'eraser' | null) => void;
   onUndo: () => void;
   onRedo: () => void;
 }
 
 export interface Action {
-  type: 'add' | 'update';
+  type: 'add' | 'update' | 'delete';
   node: NodeData;
   previousPosition?: Point;
 }
@@ -45,6 +45,7 @@ export interface InfiniteCanvasProps {
   nodeTypeToAdd?: 'square' | 'circle' | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
-  activeTool: 'zoom' | 'pan' | null;
+  activeTool: 'zoom' | 'pan' | 'eraser' | null;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
+  onDeleteNode?: (nodeId: string) => void;
 }
