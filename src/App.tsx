@@ -6,7 +6,13 @@ const BASE_NODE_WIDTH = 50;
 const BASE_NODE_HEIGHT = 50;
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
   const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | 'pencil' | null>(null);
@@ -111,6 +117,14 @@ function App() {
     }
   };
 
+  const handleThemeToggle = () => {
+    setIsDarkMode(prev => {
+      const newTheme = !prev;
+      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+      return newTheme;
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'z') {
@@ -131,7 +145,7 @@ function App() {
     <div className="w-screen h-screen">
       <FloatingMenu
         darkMode={isDarkMode}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+        onThemeToggle={handleThemeToggle}
         onAddNode={handleAddNode}
         activeTool={activeTool}
         setActiveTool={handleSetActiveTool}
