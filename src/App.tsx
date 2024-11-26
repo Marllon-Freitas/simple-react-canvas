@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
 import FloatingMenu from "./components/FloatingMenu";
 import { Action, NodeData, Point } from "./types";
+const BASE_NODE_WIDTH = 50;
+const BASE_NODE_HEIGHT = 50;
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -24,6 +26,8 @@ function App() {
       type: nodeTypeToAdd,
       position,
       scale: 1,
+      width: BASE_NODE_WIDTH,
+      height: BASE_NODE_HEIGHT
     };
     setNodes((prev) => [...prev, newNode]);
     setNodeTypeToAdd(null);

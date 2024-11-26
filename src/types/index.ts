@@ -8,6 +8,8 @@ export interface NodeData {
   type: 'square' | 'circle';
   position: Point;
   scale: number;
+  width: number;
+  height: number;
 }
 
 export interface Transform {

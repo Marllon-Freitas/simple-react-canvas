@@ -89,16 +89,16 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
         context.lineWidth = 2 / node.scale;
       }
       
-      context.fillStyle = node.type === 'square' ? 'blue' : 'red';
+      context.fillStyle = node.type === 'square' ? 'rgba(76, 0, 255, 0.5)' : 'rgba(208, 255, 0, 0.25)';
       
       if (node.type === 'square') {
-        context.fillRect(-25, -25, 50, 50);
+        context.fillRect(-25, -25, node.width, node.height);
         if (node.id === selectedNode) {
-          context.strokeRect(-25, -25, 50, 50);
+          context.strokeRect(-25, -25, node.width, node.height);
         }
       } else {
         context.beginPath();
-        context.arc(0, 0, 25, 0, 2 * Math.PI);
+        context.arc(0, 0, (node.height / 2), 0, 2 * Math.PI);
         context.fill();
         if (node.id === selectedNode) {
           context.stroke();
@@ -183,18 +183,21 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   };
 
   const isPointInNode = (point: Point, node: NodeData): boolean => {
-    const size = 25 * node.scale;
     if (node.type === 'square') {
+      const halfWidth = (node.width || 50) / 2;
+      const halfHeight = (node.height || 50) / 2;
+
       return (
-        point.x >= node.position.x - size &&
-        point.x <= node.position.x + size &&
-        point.y >= node.position.y - size &&
-        point.y <= node.position.y + size
+        point.x >= node.position.x - halfWidth &&
+        point.x <= node.position.x + halfWidth &&
+        point.y >= node.position.y - halfHeight &&
+        point.y <= node.position.y + halfHeight
       );
     } else {
+      const radius = (node.width || 50) / 2;
       const dx = point.x - node.position.x;
       const dy = point.y - node.position.y;
-      return Math.sqrt(dx * dx + dy * dy) <= size;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
     }
   };
 
