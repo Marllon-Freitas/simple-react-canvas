@@ -4,7 +4,7 @@ import { FloatingMenuProps, MenuItem } from '../types';
 const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd, onUndo, onRedo }: FloatingMenuProps) => {
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
-      { icon: <Pencil size={20} />, label: 'Pencil' },
+      { icon: <Pencil size={20} />, label: 'Pencil', onClick: () => setActiveTool(activeTool === 'pencil' ? null : 'pencil') },
       { icon: <Square size={20} />, label: 'Square', onClick: () => onAddNode('square') },
       { icon: <Circle size={20} />, label: 'Circle', onClick: () => onAddNode('circle') },
       { icon: <Eraser size={20} />, label: 'Eraser', onClick: () => setActiveTool(activeTool === 'eraser' ? null : 'eraser') },

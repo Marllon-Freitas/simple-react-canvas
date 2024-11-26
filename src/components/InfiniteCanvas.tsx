@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { InfiniteCanvasProps, NodeData, Point, Transform } from '../types';
+import SmoothBrush from '../utils/SmoothBrush';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
   darkMode = false, 
@@ -19,7 +20,10 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const [initialPosition, setInitialPosition] = useState<Point | null>(null);
-  
+  const [drawing, setDrawing] = useState(false);
+  const [lines, setLines] = useState<Point[][]>([]);
+  const smoothBrush = useRef(new SmoothBrush({ radius: 3 })).current;
+
   const colors = {
     background: darkMode ? '#1a1a1a' : '#ffffff',
     grid: darkMode ? '#333333' : '#dddddd',
@@ -66,6 +70,27 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     context.stroke();
   }, [context, colors.grid, colors.axes, transform.x, transform.y, transform.scale]);
 
+  const drawSmoothLine = useCallback((line: Point[]) => {
+    if (line.length < 2) return;
+
+    context?.beginPath();
+    context?.moveTo(line[0].x, line[0].y);
+
+    for (let i = 1; i < line.length - 2; i++) {
+      const xc = (line[i].x + line[i + 1].x) / 2;
+      const yc = (line[i].y + line[i + 1].y) / 2;
+      context?.quadraticCurveTo(line[i].x, line[i].y, xc, yc);
+    }
+
+    context?.quadraticCurveTo(
+      line[line.length - 2].x,
+      line[line.length - 2].y,
+      line[line.length - 1].x,
+      line[line.length - 1].y
+    );
+    context?.stroke();
+  }, [context]);
+
   const draw = useCallback(() => {
     if (!context || !canvasRef.current) return;
 
@@ -107,8 +132,16 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       context.restore();
     });
 
+    context.strokeStyle = darkMode ? '#ffffff' : '#000000';
+    context.lineWidth = 2;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    lines.forEach(line => {
+      drawSmoothLine(line);
+    });
+
     context.restore();
-  }, [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, selectedNode, darkMode]);
+  }, [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, darkMode, lines, selectedNode, drawSmoothLine]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -169,8 +202,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (!context) return;
     draw();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [context, transform, darkMode, nodes, selectedNode]);
-
+  }, [context, transform, darkMode, nodes, selectedNode, lines]);
 
   const getCanvasCoordinates = (clientX: number, clientY: number): Point => {
     const canvas = canvasRef.current;
@@ -203,48 +235,64 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const coords = getCanvasCoordinates(e.clientX, e.clientY);
-    const clickedNode = nodes.find(node => isPointInNode(coords, node));
-    if (clickedNode) {
-      if (activeTool === 'eraser') {
-        onDeleteNode?.(clickedNode.id);
-      } else {
-        setSelectedNode(clickedNode.id);
-        setIsDraggingNode(true);
-        setLastPosition({ x: e.clientX, y: e.clientY });
-        setInitialPosition(clickedNode.position);
-      }
+    if (activeTool === 'pencil') {
+      setDrawing(true);
+      setLines(prev => [...prev, [coords]]);
+      smoothBrush.update(coords, { both: true });
     } else {
-      if (activeTool === 'zoom') {
-        const zoomFactor = e.shiftKey ? 0.9 : 1.1;
-        const newScale = transform.scale * zoomFactor;
-
-        if (newScale < 0.1 || newScale > 3) return;
-
-        const scaleDiff = newScale - transform.scale;
-        const newX = transform.x - (coords.x * scaleDiff);
-        const newY = transform.y - (coords.y * scaleDiff);
-
-        setTransform({
-          x: newX,
-          y: newY,
-          scale: newScale
-        });
-      } else if (activeTool === 'pan') {
-        setIsDragging(true);
-        setLastPosition({ x: e.clientX, y: e.clientY });
-      } else if (onPlaceNode && nodeTypeToAdd) {
-        onPlaceNode(coords);
+      const clickedNode = nodes.find(node => isPointInNode(coords, node));
+      if (clickedNode) {
+        if (activeTool === 'eraser') {
+          onDeleteNode?.(clickedNode.id);
+        } else {
+          setSelectedNode(clickedNode.id);
+          setIsDraggingNode(true);
+          setLastPosition({ x: e.clientX, y: e.clientY });
+          setInitialPosition(clickedNode.position);
+        }
       } else {
-        setIsDragging(true);
-        setLastPosition({ x: e.clientX, y: e.clientY });
+        if (activeTool === 'zoom') {
+          const zoomFactor = e.shiftKey ? 0.9 : 1.1;
+          const newScale = transform.scale * zoomFactor;
+
+          if (newScale < 0.1 || newScale > 3) return;
+
+          const scaleDiff = newScale - transform.scale;
+          const newX = transform.x - (coords.x * scaleDiff);
+          const newY = transform.y - (coords.y * scaleDiff);
+
+          setTransform({
+            x: newX,
+            y: newY,
+            scale: newScale
+          });
+        } else if (activeTool === 'pan') {
+          setIsDragging(true);
+          setLastPosition({ x: e.clientX, y: e.clientY });
+        } else if (onPlaceNode && nodeTypeToAdd) {
+          onPlaceNode(coords);
+        } else {
+          setIsDragging(true);
+          setLastPosition({ x: e.clientX, y: e.clientY });
+        }
       }
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!lastPosition) return;
+    if (!lastPosition && !drawing) return;
 
-    if (isDraggingNode && selectedNode) {
+    if (drawing) {
+      const coords = getCanvasCoordinates(e.clientX, e.clientY);
+      smoothBrush.update(coords, { both: false, friction: 0.30 });
+      const brushCoords = smoothBrush.getBrushCoordinates();
+      setLines(prev => {
+        const newLines = [...prev];
+        newLines[newLines.length - 1].push(brushCoords);
+        return newLines;
+      });
+      draw();
+    } else if (isDraggingNode && selectedNode && lastPosition) {
       const deltaX = (e.clientX - lastPosition.x) / transform.scale;
       const deltaY = (e.clientY - lastPosition.y) / transform.scale;
 
@@ -257,7 +305,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       }
 
       setLastPosition({ x: e.clientX, y: e.clientY });
-    } else if (isDragging) {
+    } else if (isDragging && lastPosition) {
       const deltaX = e.clientX - lastPosition.x;
       const deltaY = e.clientY - lastPosition.y;
 
@@ -272,7 +320,9 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   };
 
   const handleMouseUp = () => {
-    if (isDraggingNode && selectedNode && initialPosition) {
+    if (drawing) {
+      setDrawing(false);
+    } else if (isDraggingNode && selectedNode && initialPosition) {
       onMouseUp?.(selectedNode, initialPosition);
     }
     setIsDragging(false);

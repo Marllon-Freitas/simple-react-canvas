@@ -28,9 +28,9 @@ export interface FloatingMenuProps {
   darkMode: boolean;
   onThemeToggle: () => void;
   onAddNode: (type: 'square' | 'circle') => void;
-  activeTool: 'zoom' | 'pan' | 'eraser' | null;
+  activeTool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null;
   nodeTypeToAdd: 'square' | 'circle' | null;
-  setActiveTool: (tool: 'zoom' | 'pan' | 'eraser' | null) => void;
+  setActiveTool: (tool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null) => void;
   onUndo: () => void;
   onRedo: () => void;
 }
@@ -47,7 +47,18 @@ export interface InfiniteCanvasProps {
   nodeTypeToAdd?: 'square' | 'circle' | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
-  activeTool: 'zoom' | 'pan' | 'eraser' | null;
+  activeTool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
+}
+
+export interface SmoothBrushOptions {
+  radius?: number;
+  enabled?: boolean;
+  initialPoint?: Point;
+}
+
+export interface SmoothBrushUpdateOptions {
+  both?: boolean;
+  friction?: number;
 }

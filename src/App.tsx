@@ -9,7 +9,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
-  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | null>(null);
+  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | 'pencil' | null>(null);
   const [history, setHistory] = useState<Action[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -58,7 +58,7 @@ function App() {
     }
   };
 
-  const handleSetActiveTool = (tool: 'zoom' | 'pan' | 'eraser' | null) => {
+  const handleSetActiveTool = (tool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null) => {
     setActiveTool(tool);
     setNodeTypeToAdd(null);
   };
