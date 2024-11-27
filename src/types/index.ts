@@ -36,9 +36,10 @@ export interface FloatingMenuProps {
 }
 
 export interface Action {
-  type: 'add' | 'update' | 'delete';
-  node: NodeData;
+  type: 'add' | 'update' | 'delete' | 'draw';
+  node?: NodeData;
   previousPosition?: Point;
+  line?: Point[];
 }
 
 export interface InfiniteCanvasProps {
@@ -51,6 +52,12 @@ export interface InfiniteCanvasProps {
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
+  history: Action[];
+  setHistory: React.Dispatch<React.SetStateAction<Action[]>>;
+  historyIndex: number;
+  setHistoryIndex: React.Dispatch<React.SetStateAction<number>>;
+  lines: Point[][];
+  setLines: React.Dispatch<React.SetStateAction<Point[][]>>;
 }
 
 export interface SmoothBrushOptions {

@@ -14,6 +14,7 @@ function App() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
   const [nodes, setNodes] = useState<NodeData[]>([]);
+  const [lines, setLines] = useState<Point[][]>([]);
   const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
   const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | 'pencil' | null>(null);
   const [history, setHistory] = useState<Action[]>([]);
@@ -74,15 +75,17 @@ function App() {
 
     const action = history[historyIndex];
     if (action.type === 'add') {
-      setNodes(prev => prev.filter(node => node.id !== action.node.id));
+      setNodes(prev => prev.filter(node => node.id !== action.node!.id));
     } else if (action.type === 'update') {
       setNodes(prev => prev.map(node => 
-        node.id === action.node.id 
+        node.id === action.node!.id 
           ? { ...node, position: action.previousPosition! }
           : node
       ));
     } else if (action.type === 'delete') {
-      setNodes(prev => [...prev, action.node]);
+      setNodes(prev => [...prev, action.node!]);
+    } else if (action.type === 'draw') {
+      setLines(prev => prev.slice(0, -1));
     }
 
     setHistoryIndex(historyIndex - 1);
@@ -93,15 +96,17 @@ function App() {
 
     const action = history[historyIndex + 1];
     if (action.type === 'add') {
-      setNodes(prev => [...prev, action.node]);
+      setNodes(prev => [...prev, action.node!]);
     } else if (action.type === 'update') {
       setNodes(prev => prev.map(node => 
-        node.id === action.node.id 
-          ? { ...node, position: action.node.position }
+        node.id === action.node!.id 
+          ? { ...node, position: action.node!.position }
           : node
       ));
     } else if (action.type === 'delete') {
-      setNodes(prev => prev.filter(node => node.id !== action.node.id));
+      setNodes(prev => prev.filter(node => node.id !== action.node!.id));
+    } else if (action.type === 'draw') {
+      setLines(prev => [...prev, action.line!]);
     }
 
     setHistoryIndex(historyIndex + 1);
@@ -162,7 +167,13 @@ function App() {
         nodeTypeToAdd={nodeTypeToAdd}
         activeTool={activeTool}
         onMouseUp={handleMouseUp}
+        lines={lines}
+        setLines={setLines}
         setNodes={setNodes}
+        history={history}
+        setHistory={setHistory}
+        historyIndex={historyIndex}
+        setHistoryIndex={setHistoryIndex}
       />
     </div>
   );

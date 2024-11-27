@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { InfiniteCanvasProps, NodeData, Point, Transform } from '../types';
+import { Action, InfiniteCanvasProps, NodeData, Point, Transform } from '../types';
 import SmoothBrush from '../utils/SmoothBrush';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
@@ -11,7 +11,13 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   nodeTypeToAdd,
   activeTool,
   onMouseUp,
-  setNodes
+  lines,
+  setLines,
+  setNodes,
+  history,
+  setHistory,
+  historyIndex,
+  setHistoryIndex
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -22,7 +28,6 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const [initialPosition, setInitialPosition] = useState<Point | null>(null);
   const [drawing, setDrawing] = useState(false);
-  const [lines, setLines] = useState<Point[][]>([]);
   const [resizingNode, setResizingNode] = useState<string | null>(null);
   const smoothBrush = useRef(new SmoothBrush({ radius: 3 })).current;
 
@@ -362,6 +367,11 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const handleMouseUp = () => {
     if (drawing) {
       setDrawing(false);
+      const lastLine = lines[lines.length - 1];
+      const newAction: Action = { type: 'draw', line: lastLine };
+      const newHistory = history.slice(0, historyIndex + 1);
+      setHistory([...newHistory, newAction]);
+      setHistoryIndex(newHistory.length);
     } else if (resizingNode) {
       setResizingNode(null);
       setInitialPosition(null);
