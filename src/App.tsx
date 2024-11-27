@@ -162,6 +162,7 @@ function App() {
         nodeTypeToAdd={nodeTypeToAdd}
         activeTool={activeTool}
         onMouseUp={handleMouseUp}
+        setNodes={setNodes}
       />
     </div>
   );

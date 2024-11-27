@@ -50,6 +50,7 @@ export interface InfiniteCanvasProps {
   activeTool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
+  setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
 }
 
 export interface SmoothBrushOptions {

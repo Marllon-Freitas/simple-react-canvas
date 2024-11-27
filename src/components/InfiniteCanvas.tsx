@@ -10,7 +10,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   onDeleteNode,
   nodeTypeToAdd,
   activeTool,
-  onMouseUp
+  onMouseUp,
+  setNodes
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -22,6 +23,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [initialPosition, setInitialPosition] = useState<Point | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [lines, setLines] = useState<Point[][]>([]);
+  const [resizingNode, setResizingNode] = useState<string | null>(null);
   const smoothBrush = useRef(new SmoothBrush({ radius: 3 })).current;
 
   const colors = {
@@ -117,9 +119,9 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       context.fillStyle = node.type === 'square' ? 'rgba(76, 0, 255, 0.5)' : 'rgba(208, 255, 0, 0.25)';
       
       if (node.type === 'square') {
-        context.fillRect(-25, -25, node.width, node.height);
+        context.fillRect(-node.width / 2, -node.height / 2, node.width, node.height);
         if (node.id === selectedNode) {
-          context.strokeRect(-25, -25, node.width, node.height);
+          context.strokeRect(-node.width / 2, -node.height / 2, node.width, node.height);
         }
       } else {
         context.beginPath();
@@ -216,14 +218,18 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
 
   const isPointInNode = (point: Point, node: NodeData): boolean => {
     if (node.type === 'square') {
-      const halfWidth = (node.width || 50) / 2;
-      const halfHeight = (node.height || 50) / 2;
-
+      const halfWidth = node.width / 2;
+      const halfHeight = node.height / 2;
+      const left = node.position.x - halfWidth;
+      const right = node.position.x + halfWidth;
+      const top = node.position.y - halfHeight;
+      const bottom = node.position.y + halfHeight;
+  
       return (
-        point.x >= node.position.x - halfWidth &&
-        point.x <= node.position.x + halfWidth &&
-        point.y >= node.position.y - halfHeight &&
-        point.y <= node.position.y + halfHeight
+        point.x >= left &&
+        point.x <= right &&
+        point.y >= top &&
+        point.y <= bottom
       );
     } else {
       const radius = (node.width || 50) / 2;
@@ -232,13 +238,26 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       return Math.sqrt(dx * dx + dy * dy) <= radius;
     }
   };
-
+  
   const handleMouseDown = (e: React.MouseEvent) => {
     const coords = getCanvasCoordinates(e.clientX, e.clientY);
     if (activeTool === 'pencil') {
       setDrawing(true);
       setLines(prev => [...prev, [coords]]);
       smoothBrush.update(coords, { both: true });
+    } else if (nodeTypeToAdd) {
+      const newNode: NodeData = {
+        id: `${nodeTypeToAdd}-${Date.now()}`,
+        type: nodeTypeToAdd,
+        position: coords,
+        scale: 1,
+        width: 50,
+        height: 50
+      };
+      setNodes(prev => [...prev, newNode]);
+      setSelectedNode(newNode.id);
+      setResizingNode(newNode.id);
+      setInitialPosition(coords);
     } else {
       const clickedNode = nodes.find(node => isPointInNode(coords, node));
       if (clickedNode) {
@@ -280,7 +299,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!lastPosition && !drawing) return;
+    if (!lastPosition && !drawing && !resizingNode) return;
 
     if (drawing) {
       const coords = getCanvasCoordinates(e.clientX, e.clientY);
@@ -291,6 +310,27 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
         newLines[newLines.length - 1].push(brushCoords);
         return newLines;
       });
+      draw();
+    } else if (resizingNode && initialPosition) {
+      const coords = getCanvasCoordinates(e.clientX, e.clientY);
+      const newWidth = Math.abs(coords.x - initialPosition.x);
+      const newHeight = Math.abs(coords.y - initialPosition.y);
+  
+      const newPosition = {
+        x: coords.x < initialPosition.x ? initialPosition.x - newWidth / 2 : initialPosition.x + newWidth / 2,
+        y: coords.y < initialPosition.y ? initialPosition.y - newHeight / 2 : initialPosition.y + newHeight / 2
+      };
+  
+      setNodes(prev => prev.map(node => 
+        node.id === resizingNode 
+          ? { 
+              ...node, 
+              width: newWidth, 
+              height: newHeight,
+              position: newPosition
+            }
+          : node
+      ));
       draw();
     } else if (isDraggingNode && selectedNode && lastPosition) {
       const deltaX = (e.clientX - lastPosition.x) / transform.scale;
@@ -322,6 +362,9 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const handleMouseUp = () => {
     if (drawing) {
       setDrawing(false);
+    } else if (resizingNode) {
+      setResizingNode(null);
+      setInitialPosition(null);
     } else if (isDraggingNode && selectedNode && initialPosition) {
       onMouseUp?.(selectedNode, initialPosition);
     }
@@ -337,7 +380,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       className="w-full h-full touch-none"
       style={{ 
         background: colors.background,
-        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : activeTool === 'eraser' ? 'not-allowed' : 'default'
+        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' || activeTool === 'pencil' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : activeTool === 'eraser' ? 'not-allowed' : 'default'
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
