@@ -39,6 +39,7 @@ export interface Action {
   type: 'add' | 'update' | 'delete' | 'draw';
   node?: NodeData;
   previousPosition?: Point;
+  previousDimensions?: { width: number; height: number };
   line?: Point[];
 }
 
