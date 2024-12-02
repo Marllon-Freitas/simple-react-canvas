@@ -1,5 +1,5 @@
 import { Moon, Sun, Move, ZoomIn, Undo, Redo, Square, Circle, Pencil, Eraser, Settings } from 'lucide-react';
-import { FloatingMenuProps, MenuItem } from '../types';
+import { FloatingMenuProps, MenuItem } from '../../types';
 
 const FloatingMenu = ({ darkMode, onThemeToggle, onAddNode, activeTool, setActiveTool, nodeTypeToAdd, onUndo, onRedo }: FloatingMenuProps) => {
   const menuItems: Record<string, MenuItem[]> = {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Action, InfiniteCanvasProps, NodeData, Point, Transform } from '../types';
-import SmoothBrush from '../utils/SmoothBrush';
+import { Action, InfiniteCanvasProps, NodeData, Point, Transform } from '../../types';
+import SmoothBrush from '../../utils/SmoothBrush';
+import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode } from './utils';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
   darkMode = false, 
@@ -113,31 +114,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     drawGrid();
 
     nodes.forEach(node => {
-      context.save();
-      context.translate(node.position.x, node.position.y);
-      context.scale(node.scale, node.scale);
-      
-      if (node.id === selectedNode) {
-        context.strokeStyle = darkMode ? '#ffffff' : '#000000';
-        context.lineWidth = 2 / node.scale;
-      }
-      
-      context.fillStyle = node.type === 'square' ? 'rgba(76, 0, 255, 0.5)' : 'rgba(208, 255, 0, 0.25)';
-      
-      if (node.type === 'square') {
-        context.fillRect(-node.width / 2, -node.height / 2, node.width, node.height);
-        if (node.id === selectedNode) {
-          context.strokeRect(-node.width / 2, -node.height / 2, node.width, node.height);
-        }
-      } else {
-        context.beginPath();
-        context.ellipse(0, 0, node.width / 2, node.height / 2, 0, 0, 2 * Math.PI);
-        context.fill();
-        if (node.id === selectedNode) {
-          context.stroke();
-        }
-      }
-      context.restore();
+      drawNode(context, node, darkMode, selectedNode);
     });
 
     context.strokeStyle = darkMode ? '#ffffff' : '#000000';
@@ -149,23 +126,25 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     });
 
     if (newNode) {
-      context.save();
-      context.translate(newNode.position.x, newNode.position.y);
-      context.scale(newNode.scale, newNode.scale);
-      context.strokeStyle = darkMode ? '#ffffff' : '#000000';
-      context.lineWidth = 2 / newNode.scale;
-      if (newNode.type === 'square') {
-        context.strokeRect(-newNode.width / 2, -newNode.height / 2, newNode.width, newNode.height);
-      } else {
-        context.beginPath();
-        context.ellipse(0, 0, newNode.width / 2, newNode.height / 2, 0, 0, 2 * Math.PI);
-        context.stroke();
-      }
-      context.restore();
+      drawNodePrevOutline(context, newNode, darkMode);
     }
 
     context.restore();
-  }, [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, darkMode, lines, newNode, selectedNode, drawSmoothLine]);
+  }, 
+  [
+    context, 
+    colors.background, 
+    transform.x, 
+    transform.y, 
+    transform.scale, 
+    drawGrid, 
+    nodes, 
+    darkMode, 
+    lines, 
+    newNode, 
+    selectedNode, 
+    drawSmoothLine
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -227,43 +206,9 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     draw();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context, transform, darkMode, nodes, selectedNode, lines]);
-
-  const getCanvasCoordinates = (clientX: number, clientY: number): Point => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (clientX - rect.left - transform.x) / transform.scale;
-    const y = (clientY - rect.top - transform.y) / transform.scale;
-    return { x, y };
-  };
-
-  const isPointInNode = (point: Point, node: NodeData): boolean => {
-    if (node.type === 'square') {
-      const halfWidth = node.width / 2;
-      const halfHeight = node.height / 2;
-      const left = node.position.x - halfWidth;
-      const right = node.position.x + halfWidth;
-      const top = node.position.y - halfHeight;
-      const bottom = node.position.y + halfHeight;
-  
-      return (
-        point.x >= left &&
-        point.x <= right &&
-        point.y >= top &&
-        point.y <= bottom
-      );
-    } else {
-      const radiusX = node.width / 2;
-      const radiusY = node.height / 2;
-      const dx = (point.x - node.position.x) / radiusX;
-      const dy = (point.y - node.position.y) / radiusY;
-      return (dx * dx + dy * dy) <= 1;
-    }
-  };
   
   const handleMouseDown = (e: React.MouseEvent) => {
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
     if (activeTool === 'pencil') {
       setDrawing(true);
       setLines(prev => [...prev, [coords]]);
@@ -324,7 +269,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (!lastPosition && !drawing && !resizingNode && !newNode) return;
 
     if (drawing) {
-      const coords = getCanvasCoordinates(e.clientX, e.clientY);
+      const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
       smoothBrush.update(coords, { both: false, friction: 0.30 });
       const brushCoords = smoothBrush.getBrushCoordinates();
       setLines(prev => {
@@ -334,7 +279,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       });
       draw();
     } else if (resizingNode && initialPosition && newNode) {
-      const coords = getCanvasCoordinates(e.clientX, e.clientY);
+      const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
       const newWidth = Math.abs(coords.x - initialPosition.x);
       const newHeight = Math.abs(coords.y - initialPosition.y);
   
@@ -411,7 +356,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       className="w-full h-full touch-none"
       style={{ 
         background: colors.background,
-        cursor: nodeTypeToAdd === 'square' || nodeTypeToAdd === 'circle' || activeTool === 'pencil' ? 'crosshair' : activeTool === 'zoom' ? 'zoom-in' : activeTool === 'pan' ? 'grab' : activeTool === 'eraser' ? 'not-allowed' : 'default'
+        cursor: getCursorStyle(nodeTypeToAdd, activeTool)
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
