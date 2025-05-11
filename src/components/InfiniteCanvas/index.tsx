@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Action, InfiniteCanvasProps, NodeData, Point, Transform } from '../../types';
+import { Action, ActionType, InfiniteCanvasProps, NodeData, Point, ToolType, Transform } from '../../types';
 import SmoothBrush from '../../utils/SmoothBrush';
-import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode } from './utils';
+import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
   darkMode = false, 
@@ -15,12 +15,10 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   lines,
   setLines,
   setNodes,
-  history,
-  setHistory,
-  historyIndex,
-  setHistoryIndex
+  addAction
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const [isDragging, setIsDragging] = useState(false);
@@ -209,7 +207,32 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   
   const handleMouseDown = (e: React.MouseEvent) => {
     const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
-    if (activeTool === 'pencil') {
+
+    if (e.button === 1) {
+      setIsDragging(true);
+      setLastPosition({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    if (activeTool === ToolType.ERASER) {
+      const lineIndex = lines.findIndex(line => isPointOnLine(coords, line));
+      if (lineIndex !== -1) {
+        const removedLine = lines[lineIndex];
+        setLines(prev => prev.filter((_, index) => index !== lineIndex));
+
+        const newAction: Action = { type: ActionType.DELETE, line: removedLine };
+        addAction(newAction);
+        return;
+      }
+
+      const clickedNode = nodes.find(node => isPointInNode(coords, node));
+      if (clickedNode) {
+        onDeleteNode?.(clickedNode.id);
+      }
+      return;
+    }
+
+    if (activeTool === ToolType.PENCIL) {
       setDrawing(true);
       setLines(prev => [...prev, [coords]]);
       smoothBrush.update(coords, { both: true });
@@ -228,16 +251,12 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     } else {
       const clickedNode = nodes.find(node => isPointInNode(coords, node));
       if (clickedNode) {
-        if (activeTool === 'eraser') {
-          onDeleteNode?.(clickedNode.id);
-        } else {
-          setSelectedNode(clickedNode.id);
-          setIsDraggingNode(true);
-          setLastPosition({ x: e.clientX, y: e.clientY });
-          setInitialPosition(clickedNode.position);
-        }
+        setSelectedNode(clickedNode.id);
+        setIsDraggingNode(true);
+        setLastPosition({ x: e.clientX, y: e.clientY });
+        setInitialPosition(clickedNode.position);
       } else {
-        if (activeTool === 'zoom') {
+        if (activeTool === ToolType.ZOOM) {
           const zoomFactor = e.shiftKey ? 0.9 : 1.1;
           const newScale = transform.scale * zoomFactor;
 
@@ -252,7 +271,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
             y: newY,
             scale: newScale
           });
-        } else if (activeTool === 'pan') {
+        } else if (activeTool === ToolType.PAN) {
           setIsDragging(true);
           setLastPosition({ x: e.clientX, y: e.clientY });
         } else if (onPlaceNode && nodeTypeToAdd) {
@@ -322,24 +341,25 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (e.button === 1) {
+      setIsDragging(false);
+      setLastPosition(null);
+      return;
+    }
     if (drawing) {
       setDrawing(false);
       const lastLine = lines[lines.length - 1];
-      const newAction: Action = { type: 'draw', line: lastLine };
-      const newHistory = history.slice(0, historyIndex + 1);
-      setHistory([...newHistory, newAction]);
-      setHistoryIndex(newHistory.length);
+      const newAction: Action = { type: ActionType.DRAW, line: lastLine };
+      addAction(newAction);
     } else if (resizingNode && newNode) {
       setNodes(prev => [...prev, newNode]);
       setSelectedNode(newNode.id);
       setResizingNode(null);
       setInitialPosition(null);
 
-      const newAction: Action = { type: 'add', node: newNode };
-      const newHistory = history.slice(0, historyIndex + 1);
-      setHistory([...newHistory, newAction]);
-      setHistoryIndex(newHistory.length);
+      const newAction: Action = { type: ActionType.ADD, node: newNode };
+      addAction(newAction);
       setNewNode(null);
     } else if (isDraggingNode && selectedNode && initialPosition) {
       onMouseUp?.(selectedNode, initialPosition);
@@ -356,7 +376,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       className="w-full h-full touch-none"
       style={{ 
         background: colors.background,
-        cursor: getCursorStyle(nodeTypeToAdd, activeTool)
+        cursor: isDragging ? 'grab' : getCursorStyle(nodeTypeToAdd, activeTool)
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

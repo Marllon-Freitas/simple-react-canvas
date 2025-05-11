@@ -1,91 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
-import FloatingMenu from "./components/FloatingMenu";
-import { Action, NodeData, Point } from "./types";
-const BASE_NODE_WIDTH = 50;
-const BASE_NODE_HEIGHT = 50;
+import { Action, ActionType, NodeType, Point, ToolType } from "./types";
+import { useThemeMode } from "./hooks/useThemeMode";
+import { useHistory } from "./hooks/useHistory";
+import { useNodes } from "./hooks/useNodes";
+import { useCanvasTools } from "./hooks/useCanvasTools";
+import { FloatingMenu } from "./components/FloatingMenu";
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-  const [nodes, setNodes] = useState<NodeData[]>([]);
-  const [lines, setLines] = useState<Point[][]>([]);
-  const [nodeTypeToAdd, setNodeTypeToAdd] = useState<'square' | 'circle' | null>(null);
-  const [activeTool, setActiveTool] = useState<'zoom' | 'pan' | 'eraser' | 'pencil' | null>(null);
-  const [history, setHistory] = useState<Action[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const { isDarkMode, toggleTheme } = useThemeMode();
+  const { activeTool, setActiveTool, lines, setLines } = useCanvasTools();
+  const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
+  const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
 
-  const handleAddNode = (type: 'square' | 'circle') => {
+  const handleAddNode = (type: NodeType) => {
     setNodeTypeToAdd(type);
     setActiveTool(null);
   };
 
   const handlePlaceNode = (position: Point) => {
     if (!nodeTypeToAdd) return;
-
-    const newNode: NodeData = {
-      id: `${nodeTypeToAdd}-${Date.now()}`,
-      type: nodeTypeToAdd,
-      position,
-      scale: 1,
-      width: BASE_NODE_WIDTH,
-      height: BASE_NODE_HEIGHT
-    };
-    setNodes((prev) => [...prev, newNode]);
+    const newNode = addNode(position, nodeTypeToAdd);
+    const newAction: Action = { type: ActionType.ADD, node: newNode };
+    addAction(newAction);
     setNodeTypeToAdd(null);
-
-    const newAction: Action = { type: 'add', node: newNode };
-    const newHistory = history.slice(0, historyIndex + 1);
-    setHistory([...newHistory, newAction]);
-    setHistoryIndex(newHistory.length);
   };
 
   const handleUpdateNode = (nodeId: string, newPosition: Point) => {
-    setNodes(prev => prev.map(node => 
-      node.id === nodeId 
-        ? { ...node, position: newPosition }
-        : node
-    ));
+    updateNode(nodeId, newPosition);
   };
 
   const handleDeleteNode = (nodeId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
-      setNodes(prev => prev.filter(n => n.id !== nodeId));
-
-      const newAction: Action = { type: 'delete', node };
-      const newHistory = history.slice(0, historyIndex + 1);
-      setHistory([...newHistory, newAction]);
-      setHistoryIndex(newHistory.length);
+      deleteNode(nodeId);
+      const newAction: Action = { type: ActionType.DELETE, node };
+      addAction(newAction);
     }
   };
 
-  const handleSetActiveTool = (tool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null) => {
+ const handleSetActiveTool = (tool: ToolType) => {
     setActiveTool(tool);
     setNodeTypeToAdd(null);
   };
 
   const handleUndo = () => {
     if (historyIndex < 0) return;
-
     const action = history[historyIndex];
-    if (action.type === 'add') {
-      setNodes(prev => prev.filter(node => node.id !== action.node!.id));
-    } else if (action.type === 'update') {
-      setNodes(prev => prev.map(node => 
-        node.id === action.node!.id 
-          ? { ...node, position: action.previousPosition! }
-          : node
-      ));
-    } else if (action.type === 'delete') {
-      setNodes(prev => [...prev, action.node!]);
-    } else if (action.type === 'draw') {
-      setLines(prev => prev.slice(0, -1));
+
+    switch (action.type) {
+      case 'add':
+        setNodes(prev => prev.filter(node => node.id !== action.node!.id));
+        break;
+      case 'update':
+        setNodes(prev => prev.map(node => 
+          node.id === action.node!.id 
+            ? { ...node, position: action.previousPosition! }
+            : node
+        ));
+        break;
+      case 'delete':
+        if (action.node) {
+          setNodes(prev => [...prev, action.node!]);
+        } else if (action.line) {
+          setLines(prev => [...prev, action.line!]);
+        }
+        break;
+      case 'draw':
+        setLines(prev => prev.slice(0, -1));
+        break;
     }
 
     setHistoryIndex(historyIndex - 1);
@@ -93,20 +76,29 @@ function App() {
 
   const handleRedo = () => {
     if (historyIndex >= history.length - 1) return;
-
     const action = history[historyIndex + 1];
-    if (action.type === 'add') {
-      setNodes(prev => [...prev, action.node!]);
-    } else if (action.type === 'update') {
-      setNodes(prev => prev.map(node => 
-        node.id === action.node!.id 
-          ? { ...node, position: action.node!.position }
-          : node
-      ));
-    } else if (action.type === 'delete') {
-      setNodes(prev => prev.filter(node => node.id !== action.node!.id));
-    } else if (action.type === 'draw') {
-      setLines(prev => [...prev, action.line!]);
+
+    switch (action.type) {
+      case 'add':
+        setNodes(prev => [...prev, action.node!]);
+        break;
+      case 'update':
+        setNodes(prev => prev.map(node => 
+          node.id === action.node!.id 
+            ? { ...node, position: action.node!.position }
+            : node
+        ));
+        break;
+      case 'delete':
+        if (action.node) {
+          setNodes(prev => prev.filter(node => node.id !== action.node!.id));
+        } else if (action.line) {
+          setLines(prev => prev.filter(line => line !== action.line));
+        }
+        break;
+      case 'draw':
+        setLines(prev => [...prev, action.line!]);
+        break;
     }
 
     setHistoryIndex(historyIndex + 1);
@@ -115,19 +107,9 @@ function App() {
   const handleMouseUp = (nodeId: string, previousPosition: Point) => {
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
-      const newAction: Action = { type: 'update', node, previousPosition };
-      const newHistory = history.slice(0, historyIndex + 1);
-      setHistory([...newHistory, newAction]);
-      setHistoryIndex(newHistory.length);
+      const newAction: Action = { type: ActionType.UPDATE, node, previousPosition };
+      addAction(newAction);
     }
-  };
-
-  const handleThemeToggle = () => {
-    setIsDarkMode(prev => {
-      const newTheme = !prev;
-      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-      return newTheme;
-    });
   };
 
   useEffect(() => {
@@ -150,7 +132,7 @@ function App() {
     <div className="w-screen h-screen">
       <FloatingMenu
         darkMode={isDarkMode}
-        onThemeToggle={handleThemeToggle}
+        onThemeToggle={toggleTheme}
         onAddNode={handleAddNode}
         activeTool={activeTool}
         setActiveTool={handleSetActiveTool}
@@ -170,10 +152,7 @@ function App() {
         lines={lines}
         setLines={setLines}
         setNodes={setNodes}
-        history={history}
-        setHistory={setHistory}
-        historyIndex={historyIndex}
-        setHistoryIndex={setHistoryIndex}
+        addAction={addAction}
       />
     </div>
   );

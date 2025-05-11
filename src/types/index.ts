@@ -1,21 +1,40 @@
+export enum NodeType {
+  SQUARE = 'square',
+  CIRCLE = 'circle',
+}
+
+export enum ToolType {
+  ZOOM = 'zoom',
+  PAN = 'pan',
+  ERASER = 'eraser',
+  PENCIL = 'pencil',
+}
+
+export enum ActionType {
+  ADD = 'add',
+  DELETE = 'delete',
+  UPDATE = 'update',
+  DRAW = 'draw',
+}
+
 export interface Point {
   x: number;
   y: number;
-}
-
-export interface NodeData {
-  id: string;
-  type: 'square' | 'circle';
-  position: Point;
-  scale: number;
-  width: number;
-  height: number;
 }
 
 export interface Transform {
   x: number;
   y: number;
   scale: number;
+}
+
+export interface NodeData {
+  id: string;
+  type: NodeType;
+  position: Point;
+  scale: number;
+  width: number;
+  height: number;
 }
 
 export interface MenuItem {
@@ -27,38 +46,34 @@ export interface MenuItem {
 export interface FloatingMenuProps {
   darkMode: boolean;
   onThemeToggle: () => void;
-  onAddNode: (type: 'square' | 'circle') => void;
-  activeTool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null;
-  nodeTypeToAdd: 'square' | 'circle' | null;
-  setActiveTool: (tool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null) => void;
+  onAddNode: (type: NodeType) => void;
+  activeTool: ToolType | null;
+  nodeTypeToAdd: NodeType | null;
+  setActiveTool: (tool: ToolType) => void;
   onUndo: () => void;
   onRedo: () => void;
 }
 
 export interface Action {
-  type: 'add' | 'update' | 'delete' | 'draw';
+  type: ActionType;
   node?: NodeData;
-  previousPosition?: Point;
-  previousDimensions?: { width: number; height: number };
   line?: Point[];
+  previousPosition?: Point;
 }
 
 export interface InfiniteCanvasProps {
   darkMode?: boolean;
   nodes: NodeData[];
-  nodeTypeToAdd?: 'square' | 'circle' | null;
+  nodeTypeToAdd?: NodeType | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
-  activeTool: 'zoom' | 'pan' | 'eraser' | 'pencil' | null;
+  activeTool: ToolType | null;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
-  history: Action[];
-  setHistory: React.Dispatch<React.SetStateAction<Action[]>>;
-  historyIndex: number;
-  setHistoryIndex: React.Dispatch<React.SetStateAction<number>>;
   lines: Point[][];
   setLines: React.Dispatch<React.SetStateAction<Point[][]>>;
+  addAction: (action: Action) => void;
 }
 
 export interface SmoothBrushOptions {
