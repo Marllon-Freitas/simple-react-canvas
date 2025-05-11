@@ -6,7 +6,7 @@ interface MenuItemsProps {
   activeTool?: ToolType | null;
   nodeTypeToAdd?: NodeType | null;
   onAddNode?: (type: NodeType) => void;
-  setActiveTool?: (tool: ToolType | null) => void;
+  setActiveTool?: (tool: ToolType) => void;
   onUndo?: () => void;
   onRedo?: () => void;
   darkMode: boolean;
@@ -26,34 +26,34 @@ export const MenuItems: React.FC<MenuItemsProps> = ({
       { 
         icon: <Pencil size={20} />, 
         label: 'Pencil', 
-        onClick: () => setActiveTool(activeTool === 'pencil' ? null : 'pencil') 
+        onClick: () => setActiveTool(ToolType.PENCIL) 
       },
       { 
         icon: <Square size={20} />, 
         label: 'Square', 
-        onClick: () => onAddNode('square') 
+        onClick: () => onAddNode(NodeType.SQUARE) 
       },
       { 
         icon: <Circle size={20} />, 
         label: 'Circle', 
-        onClick: () => onAddNode('circle') 
+        onClick: () => onAddNode(NodeType.CIRCLE) 
       },
       { 
         icon: <Eraser size={20} />, 
         label: 'Eraser', 
-        onClick: () => setActiveTool(activeTool === 'eraser' ? null : 'eraser') 
+        onClick: () => setActiveTool(ToolType.ERASER) 
       },
     ],
     view: [
       { 
         icon: <ZoomIn size={20} />, 
         label: 'Zoom', 
-        onClick: () => setActiveTool(activeTool === 'zoom' ? null : 'zoom') 
+        onClick: () => setActiveTool(ToolType.ZOOM) 
       },
       { 
         icon: <Move size={20} />, 
         label: 'Pan', 
-        onClick: () => setActiveTool(activeTool === 'pan' ? null : 'pan') 
+        onClick: () => setActiveTool(ToolType.PAN) 
       },
     ],
     actions: [
