@@ -16,7 +16,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   setLines,
   setNodes,
   addAction,
-  lineColor
+  lineColor,
+  lineWidth
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -107,12 +108,12 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     context.stroke();
   }, [context, colors.grid, colors.axes, transform.x, transform.y, transform.scale]);
 
-  const drawSmoothLine = useCallback((points: Point[], color: string) => {
+  const drawSmoothLine = useCallback((points: Point[], color: string, lineWidth: number) => {
     if (!context || points.length < 2) return;
 
     context.beginPath();
     context.strokeStyle = color;
-    context.lineWidth = 2;
+    context.lineWidth = lineWidth;
     context.lineJoin = 'round';
     context.lineCap = 'round';
     context.moveTo(points[0].x, points[0].y);
@@ -151,7 +152,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     });
 
     lines.forEach(line => {
-      drawSmoothLine(line.points, line.color);
+      drawSmoothLine(line.points, line.color, line.width);
     });
 
     if (newNode) {
@@ -376,7 +377,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     setDrawing(true);
     const newLine: Line = {
       points: [coords],
-      color: lineColor
+      color: lineColor,
+      width: lineWidth
     };
     setLines(prev => [...prev, newLine]);
     smoothBrush.update(coords, { both: true });

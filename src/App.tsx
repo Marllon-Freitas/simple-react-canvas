@@ -10,7 +10,7 @@ import FloatingMenu from "./components/FloatingMenu";
 
 function App() {
   const { isDarkMode, toggleTheme } = useThemeMode();
-  const { activeTool, setActiveTool, lines, setLines, lineColor, setLineColor } = useCanvasTools();
+  const { activeTool, setActiveTool, lines, setLines, lineColor, setLineColor, lineWidth, setLineWidth} = useCanvasTools();
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
 
@@ -150,6 +150,7 @@ function App() {
         lineColor={lineColor}
         setLineColor={setLineColor}
         isDarkMode={isDarkMode}
+        setLineWidth={setLineWidth}
       />
       <InfiniteCanvas 
         darkMode={isDarkMode} 
@@ -165,6 +166,7 @@ function App() {
         setNodes={setNodes}
         addAction={addAction}
         lineColor={lineColor}
+        lineWidth={lineWidth}
       />
     </div>
   );

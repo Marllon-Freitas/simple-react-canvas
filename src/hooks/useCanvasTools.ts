@@ -5,6 +5,7 @@ export const useCanvasTools = () => {
   const [activeTool, setActiveTool] = useState<ToolType | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [lineColor, setLineColor] = useState<string>('#000000');
+  const [lineWidth, setLineWidth] = useState<number>(2);
 
   return {
     activeTool,
@@ -13,5 +14,7 @@ export const useCanvasTools = () => {
     setLines,
     lineColor,
     setLineColor,
+    lineWidth,
+    setLineWidth,
   };
 };

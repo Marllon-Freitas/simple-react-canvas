@@ -7,6 +7,7 @@ interface FloatingToolsDetailsMenuProps {
   activeTool: ToolType | null;
   lineColor: string;
   setLineColor: (color: string) => void;
+  setLineWidth: (width: number) => void;
   isDarkMode: boolean;
 }
 
@@ -14,9 +15,10 @@ const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
   activeTool,
   lineColor,
   setLineColor,
-  isDarkMode
+  isDarkMode,
+  setLineWidth,
 }) => {
-  if (!activeTool) return null;
+  if (!activeTool || activeTool !== ToolType.PENCIL && activeTool !== ToolType.ERASER) return null;
 
   return (
     <div
@@ -31,7 +33,12 @@ const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
       </h3>
 
       {activeTool === ToolType.PENCIL && (
-        <PencilSettings lineColor={lineColor} setLineColor={setLineColor} isDarkMode={isDarkMode} />
+        <PencilSettings 
+          lineColor={lineColor} 
+          setLineColor={setLineColor} 
+          isDarkMode={isDarkMode}
+          setLineWidth={setLineWidth}
+        />
       )}
 
       {activeTool === ToolType.ERASER && <EraserSettings />}

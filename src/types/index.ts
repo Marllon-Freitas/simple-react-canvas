@@ -26,6 +26,7 @@ export interface Point {
 export interface Line {
   points: Point[];
   color: string;
+  width: number;
 }
 
 export interface Transform {
@@ -81,6 +82,7 @@ export interface InfiniteCanvasProps {
   setLines: React.Dispatch<React.SetStateAction<Line[]>>;
   addAction: (action: Action) => void;
   lineColor: string;
+  lineWidth: number;
 }
 
 export interface SmoothBrushOptions {
