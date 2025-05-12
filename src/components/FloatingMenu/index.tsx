@@ -31,3 +31,5 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
     </div>
   );
 };
+
+export default React.memo(FloatingMenu);

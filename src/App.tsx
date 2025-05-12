@@ -1,12 +1,12 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
 import { Action, ActionType, NodeType, Point, ToolType } from "./types";
 import { useThemeMode } from "./hooks/useThemeMode";
 import { useHistory } from "./hooks/useHistory";
 import { useNodes } from "./hooks/useNodes";
 import { useCanvasTools } from "./hooks/useCanvasTools";
-import { FloatingMenu } from "./components/FloatingMenu";
-import { FloatingToolsDetailsMenu } from "./components/FloatingToolsDetailsMenu";
+import FloatingToolsDetailsMenu from "./components/FloatingToolsDetailsMenu";
+import FloatingMenu from "./components/FloatingMenu";
 
 function App() {
   const { isDarkMode, toggleTheme } = useThemeMode();
@@ -14,10 +14,10 @@ function App() {
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
 
-  const handleAddNode = (type: NodeType) => {
+  const handleAddNode = useCallback((type: NodeType) => {
     setNodeTypeToAdd(type);
     setActiveTool(null);
-  };
+  }, [setNodeTypeToAdd, setActiveTool]);
 
   const handlePlaceNode = (position: Point) => {
     if (!nodeTypeToAdd) return;
@@ -40,12 +40,12 @@ function App() {
     }
   };
 
- const handleSetActiveTool = (tool: ToolType) => {
+ const handleSetActiveTool = useCallback((tool: ToolType) => {
     setActiveTool(tool);
     setNodeTypeToAdd(null);
-  };
+  }, [setActiveTool, setNodeTypeToAdd]);
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex < 0) return;
     const action = history[historyIndex];
 
@@ -73,9 +73,9 @@ function App() {
     }
 
     setHistoryIndex(historyIndex - 1);
-  };
+  }, [history, historyIndex, setHistoryIndex, setLines, setNodes]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     const action = history[historyIndex + 1];
 
@@ -103,7 +103,7 @@ function App() {
     }
 
     setHistoryIndex(historyIndex + 1);
-  };
+  }, [history, historyIndex, setHistoryIndex, setLines, setNodes]);
 
   const handleMouseUp = (nodeId: string, previousPosition: Point) => {
     const node = nodes.find(n => n.id === nodeId);
@@ -129,17 +129,22 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyIndex, history]);
 
+  const actions = useMemo(() => ({
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onAddNode: handleAddNode,
+    setActiveTool,
+    onSetActiveTool: handleSetActiveTool,
+  }), [handleUndo, handleRedo, handleAddNode, setActiveTool, handleSetActiveTool]);
+
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
         darkMode={isDarkMode}
         onThemeToggle={toggleTheme}
-        onAddNode={handleAddNode}
         activeTool={activeTool}
-        setActiveTool={handleSetActiveTool}
         nodeTypeToAdd={nodeTypeToAdd}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
+        {...actions}
       />
       <FloatingToolsDetailsMenu
         activeTool={activeTool}

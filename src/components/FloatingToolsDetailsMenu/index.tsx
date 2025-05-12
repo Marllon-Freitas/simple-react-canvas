@@ -10,7 +10,7 @@ interface FloatingToolsDetailsMenuProps {
   isDarkMode: boolean;
 }
 
-export const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
+const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
   activeTool,
   lineColor,
   setLineColor,
@@ -38,3 +38,5 @@ export const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> =
     </div>
   );
 };
+
+export default React.memo(FloatingToolsDetailsMenu);
