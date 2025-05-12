@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Point, ToolType } from '../types';
+import { Line, ToolType } from '../types';
 
 export const useCanvasTools = () => {
   const [activeTool, setActiveTool] = useState<ToolType | null>(null);
-  const [lines, setLines] = useState<Point[][]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [lineColor, setLineColor] = useState<string>('#000000');
 
   return {
     activeTool,
     setActiveTool,
     lines,
-    setLines
+    setLines,
+    lineColor,
+    setLineColor,
   };
 };

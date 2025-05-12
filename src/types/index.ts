@@ -22,6 +22,11 @@ export interface Point {
   y: number;
 }
 
+export interface Line {
+  points: Point[];
+  color: string;
+}
+
 export interface Transform {
   x: number;
   y: number;
@@ -57,7 +62,7 @@ export interface FloatingMenuProps {
 export interface Action {
   type: ActionType;
   node?: NodeData;
-  line?: Point[];
+  line?: Line;
   previousPosition?: Point;
 }
 
@@ -71,9 +76,10 @@ export interface InfiniteCanvasProps {
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
-  lines: Point[][];
-  setLines: React.Dispatch<React.SetStateAction<Point[][]>>;
+  lines: Line[];
+  setLines: React.Dispatch<React.SetStateAction<Line[]>>;
   addAction: (action: Action) => void;
+  lineColor: string;
 }
 
 export interface SmoothBrushOptions {

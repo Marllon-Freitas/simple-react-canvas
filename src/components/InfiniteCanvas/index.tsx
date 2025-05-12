@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Action, ActionType, InfiniteCanvasProps, NodeData, Point, ToolType, Transform } from '../../types';
+import { Action, ActionType, InfiniteCanvasProps, Line, NodeData, Point, ToolType, Transform } from '../../types';
 import SmoothBrush from '../../utils/SmoothBrush';
 import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
 
@@ -15,7 +15,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   lines,
   setLines,
   setNodes,
-  addAction
+  addAction,
+  lineColor
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -36,6 +37,35 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     grid: darkMode ? '#333333' : '#dddddd',
     axes: darkMode ? '#404040' : '#cccccc'
   };
+  
+  const transformColorForTheme = (color: string, darkMode: boolean): string => {
+    const lightToDark = {
+      '#000000': '#FFFFFF',
+      '#FF4D4D': '#FF6666',
+      '#4DFF4D': '#66FF66',
+      '#4D4DFF': '#6666FF',
+      '#FFB84D': '#FFB366',
+      '#A64DA6': '#CC99CC',
+      '#FFFF66': '#FFFF99',
+      '#FF66FF': '#FF99FF',
+    };
+
+    const darkToLight = Object.fromEntries(
+      Object.entries(lightToDark).map(([light, dark]) => [dark, light])
+    );
+
+    const mapping = darkMode ? lightToDark : darkToLight;
+    return (mapping as Record<string, string>)[color] || color;
+  };
+
+  useEffect(() => {
+    setLines((prevLines) =>
+      prevLines.map((line) => ({
+        ...line,
+        color: transformColorForTheme(line.color, darkMode),
+      }))
+    );
+  }, [darkMode, setLines]);
 
   const drawGrid = useCallback(() => {
     if (!context || !canvasRef.current) return;
@@ -77,25 +107,30 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     context.stroke();
   }, [context, colors.grid, colors.axes, transform.x, transform.y, transform.scale]);
 
-  const drawSmoothLine = useCallback((line: Point[]) => {
-    if (line.length < 2) return;
+  const drawSmoothLine = useCallback((points: Point[], color: string) => {
+    if (!context || points.length < 2) return;
 
-    context?.beginPath();
-    context?.moveTo(line[0].x, line[0].y);
+    context.beginPath();
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.moveTo(points[0].x, points[0].y);
 
-    for (let i = 1; i < line.length - 2; i++) {
-      const xc = (line[i].x + line[i + 1].x) / 2;
-      const yc = (line[i].y + line[i + 1].y) / 2;
-      context?.quadraticCurveTo(line[i].x, line[i].y, xc, yc);
+    for (let i = 1; i < points.length - 2; i++) {
+      const xc = (points[i].x + points[i + 1].x) / 2;
+      const yc = (points[i].y + points[i + 1].y) / 2;
+      context?.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
     }
 
     context?.quadraticCurveTo(
-      line[line.length - 2].x,
-      line[line.length - 2].y,
-      line[line.length - 1].x,
-      line[line.length - 1].y
+      points[points.length - 2].x,
+      points[points.length - 2].y,
+      points[points.length - 1].x,
+      points[points.length - 1].y
     );
-    context?.stroke();
+
+    context.stroke();
   }, [context]);
 
   const draw = useCallback(() => {
@@ -115,12 +150,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       drawNode(context, node, darkMode, selectedNode);
     });
 
-    context.strokeStyle = darkMode ? '#ffffff' : '#000000';
-    context.lineWidth = 2;
-    context.lineJoin = 'round';
-    context.lineCap = 'round';
     lines.forEach(line => {
-      drawSmoothLine(line);
+      drawSmoothLine(line.points, line.color);
     });
 
     if (newNode) {
@@ -129,20 +160,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
 
     context.restore();
   }, 
-  [
-    context, 
-    colors.background, 
-    transform.x, 
-    transform.y, 
-    transform.scale, 
-    drawGrid, 
-    nodes, 
-    darkMode, 
-    lines, 
-    newNode, 
-    selectedNode, 
-    drawSmoothLine
-  ]);
+  [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, lines, newNode, darkMode, selectedNode, drawSmoothLine]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -203,7 +221,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (!context) return;
     draw();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [context, transform, darkMode, nodes, selectedNode, lines]);
+  }, [context, transform, darkMode, nodes, selectedNode, lines, lineColor]);
   
   const handleMouseDown = (e: React.MouseEvent) => {
     const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
@@ -215,7 +233,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     }
 
     if (activeTool === ToolType.ERASER) {
-      const lineIndex = lines.findIndex(line => isPointOnLine(coords, line));
+      const lineIndex = lines.findIndex(line => isPointOnLine(coords, line.points));
       if (lineIndex !== -1) {
         const removedLine = lines[lineIndex];
         setLines(prev => prev.filter((_, index) => index !== lineIndex));
@@ -234,7 +252,11 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
 
     if (activeTool === ToolType.PENCIL) {
       setDrawing(true);
-      setLines(prev => [...prev, [coords]]);
+      const newLine: Line = {
+        points: [coords],
+        color: lineColor
+      };
+      setLines(prev => [...prev, newLine]);
       smoothBrush.update(coords, { both: true });
     } else if (nodeTypeToAdd) {
       const newNode: NodeData = {
@@ -251,10 +273,10 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     } else {
       const clickedNode = nodes.find(node => isPointInNode(coords, node));
       if (clickedNode) {
-        setSelectedNode(clickedNode.id);
-        setIsDraggingNode(true);
-        setLastPosition({ x: e.clientX, y: e.clientY });
-        setInitialPosition(clickedNode.position);
+          setSelectedNode(clickedNode.id);
+          setIsDraggingNode(true);
+          setLastPosition({ x: e.clientX, y: e.clientY });
+          setInitialPosition(clickedNode.position);
       } else {
         if (activeTool === ToolType.ZOOM) {
           const zoomFactor = e.shiftKey ? 0.9 : 1.1;
@@ -291,11 +313,19 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
       smoothBrush.update(coords, { both: false, friction: 0.30 });
       const brushCoords = smoothBrush.getBrushCoordinates();
+
       setLines(prev => {
         const newLines = [...prev];
-        newLines[newLines.length - 1].push(brushCoords);
+        const lastIndex = newLines.length - 1;
+        if (lastIndex >= 0) {
+          newLines[lastIndex] = {
+            ...newLines[lastIndex],
+            points: [...newLines[lastIndex].points, brushCoords]
+          };
+        }
         return newLines;
       });
+
       draw();
     } else if (resizingNode && initialPosition && newNode) {
       const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);

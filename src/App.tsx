@@ -6,10 +6,11 @@ import { useHistory } from "./hooks/useHistory";
 import { useNodes } from "./hooks/useNodes";
 import { useCanvasTools } from "./hooks/useCanvasTools";
 import { FloatingMenu } from "./components/FloatingMenu";
+import { FloatingToolsDetailsMenu } from "./components/FloatingToolsDetailsMenu";
 
 function App() {
   const { isDarkMode, toggleTheme } = useThemeMode();
-  const { activeTool, setActiveTool, lines, setLines } = useCanvasTools();
+  const { activeTool, setActiveTool, lines, setLines, lineColor, setLineColor } = useCanvasTools();
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
 
@@ -140,6 +141,12 @@ function App() {
         onUndo={handleUndo}
         onRedo={handleRedo}
       />
+      <FloatingToolsDetailsMenu
+        activeTool={activeTool}
+        lineColor={lineColor}
+        setLineColor={setLineColor}
+        isDarkMode={isDarkMode}
+      />
       <InfiniteCanvas 
         darkMode={isDarkMode} 
         nodes={nodes} 
@@ -153,6 +160,7 @@ function App() {
         setLines={setLines}
         setNodes={setNodes}
         addAction={addAction}
+        lineColor={lineColor}
       />
     </div>
   );
