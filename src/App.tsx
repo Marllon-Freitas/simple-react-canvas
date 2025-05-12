@@ -40,7 +40,7 @@ function App() {
     }
   };
 
- const handleSetActiveTool = useCallback((tool: ToolType) => {
+ const handleSetActiveTool = useCallback((tool: ToolType | null) => {
     setActiveTool(tool);
     setNodeTypeToAdd(null);
   }, [setActiveTool, setNodeTypeToAdd]);
@@ -133,9 +133,8 @@ function App() {
     onUndo: handleUndo,
     onRedo: handleRedo,
     onAddNode: handleAddNode,
-    setActiveTool,
     onSetActiveTool: handleSetActiveTool,
-  }), [handleUndo, handleRedo, handleAddNode, setActiveTool, handleSetActiveTool]);
+  }), [handleUndo, handleRedo, handleAddNode, handleSetActiveTool]);
 
   return (
     <div className="w-screen h-screen">

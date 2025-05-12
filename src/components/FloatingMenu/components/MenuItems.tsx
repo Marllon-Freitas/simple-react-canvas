@@ -1,12 +1,12 @@
 import React from 'react';
-import { Square, Circle, Pencil, Eraser, Move, ZoomIn, Undo, Redo, Settings } from 'lucide-react';
+import { Square, Circle, Pencil, Eraser, Move, ZoomIn, Undo, Redo, Settings, MousePointer } from 'lucide-react';
 import { MenuItem, NodeType, ToolType } from '../../../types';
 
 interface MenuItemsProps {
   activeTool?: ToolType | null;
   nodeTypeToAdd?: NodeType | null;
   onAddNode?: (type: NodeType) => void;
-  setActiveTool?: (tool: ToolType) => void;
+  onSetActiveTool?: (tool: ToolType | null) => void;
   onUndo?: () => void;
   onRedo?: () => void;
   darkMode: boolean;
@@ -16,44 +16,49 @@ export const MenuItems: React.FC<MenuItemsProps> = ({
   activeTool,
   nodeTypeToAdd,
   onAddNode = () => {},
-  setActiveTool = () => {},
+  onSetActiveTool = () => {},
   onUndo = () => {},
   onRedo = () => {},
   darkMode,
 }) => {
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
+      {
+        icon: <MousePointer size={20} />,
+        label: 'Select',
+        onClick: () => onSetActiveTool(ToolType.SELECT),
+      },
       { 
         icon: <Pencil size={20} />, 
         label: 'Pencil', 
-        onClick: () => setActiveTool(ToolType.PENCIL) 
+        onClick: () => onSetActiveTool(ToolType.PENCIL) 
       },
       { 
         icon: <Square size={20} />, 
         label: 'Square', 
-        onClick: () => onAddNode(NodeType.SQUARE) 
+        onClick: () => onAddNode(NodeType.SQUARE)
       },
       { 
         icon: <Circle size={20} />, 
         label: 'Circle', 
-        onClick: () => onAddNode(NodeType.CIRCLE) 
+        onClick: () => onAddNode(NodeType.CIRCLE)
       },
       { 
         icon: <Eraser size={20} />, 
         label: 'Eraser', 
-        onClick: () => setActiveTool(ToolType.ERASER) 
+        onClick: () => onSetActiveTool(ToolType.ERASER) 
       },
     ],
     view: [
       { 
         icon: <ZoomIn size={20} />, 
         label: 'Zoom', 
-        onClick: () => setActiveTool(ToolType.ZOOM) 
+        onClick: () => onSetActiveTool(ToolType.ZOOM) 
       },
       { 
         icon: <Move size={20} />, 
         label: 'Pan', 
-        onClick: () => setActiveTool(ToolType.PAN) 
+        onClick: () => onSetActiveTool(ToolType.PAN) 
       },
     ],
     actions: [

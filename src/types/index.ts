@@ -8,6 +8,7 @@ export enum ToolType {
   PAN = 'pan',
   ERASER = 'eraser',
   PENCIL = 'pencil',
+  SELECT = 'select',
 }
 
 export enum ActionType {
@@ -35,7 +36,7 @@ export interface Transform {
 
 export interface NodeData {
   id: string;
-  type: NodeType;
+  type: NodeType | null;
   position: Point;
   scale: number;
   width: number;
@@ -51,10 +52,10 @@ export interface MenuItem {
 export interface FloatingMenuProps {
   darkMode: boolean;
   onThemeToggle: () => void;
-  onAddNode: (type: NodeType) => void;
   activeTool: ToolType | null;
+  onAddNode: (type: NodeType) => void;
   nodeTypeToAdd: NodeType | null;
-  setActiveTool: (tool: ToolType) => void;
+  onSetActiveTool: (tool: ToolType | null) => void;
   onUndo: () => void;
   onRedo: () => void;
 }
@@ -69,7 +70,7 @@ export interface Action {
 export interface InfiniteCanvasProps {
   darkMode?: boolean;
   nodes: NodeData[];
-  nodeTypeToAdd?: NodeType | null;
+  nodeTypeToAdd: NodeType | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
   activeTool: ToolType | null;

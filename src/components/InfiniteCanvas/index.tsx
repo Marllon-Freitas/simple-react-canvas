@@ -223,177 +223,279 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context, transform, darkMode, nodes, selectedNode, lines, lineColor]);
   
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!canvasRef.current || !context) return;
+
+    const coords = getCanvasCoordinates(canvasRef.current, e.clientX, e.clientY, transform);
+
+    if (drawing) {
+      handlePencilDrawing(coords);
+      return;
+    }
+
+    if (resizingNode && initialPosition && newNode) {
+      handleNodeResizing(coords);
+      return;
+    }
+
+    if (isDraggingNode && selectedNode && lastPosition) {
+      handleNodeDragging(e);
+      return;
+    }
+
+    if (isDragging && lastPosition) {
+      handleCanvasDragging(e);
+    }
+  };
+
+  const handlePencilDrawing = (coords: Point) => {
+    smoothBrush.update(coords, { both: false, friction: 0.30 });
+    const brushCoords = smoothBrush.getBrushCoordinates();
+
+    setLines(prev => {
+      const newLines = [...prev];
+      const lastIndex = newLines.length - 1;
+      if (lastIndex >= 0) {
+        newLines[lastIndex] = {
+          ...newLines[lastIndex],
+          points: [...newLines[lastIndex].points, brushCoords]
+        };
+      }
+      return newLines;
+    });
+
+    draw();
+  };
+
+  const handleNodeResizing = (coords: Point) => {
+    const newWidth = Math.abs(coords.x - initialPosition!.x);
+    const newHeight = Math.abs(coords.y - initialPosition!.y);
+
+    const newPosition = {
+      x: coords.x < initialPosition!.x 
+        ? initialPosition!.x - newWidth / 2 
+        : initialPosition!.x + newWidth / 2,
+      y: coords.y < initialPosition!.y 
+        ? initialPosition!.y - newHeight / 2 
+        : initialPosition!.y + newHeight / 2
+    };
+
+    setNewNode(prev => prev ? ({
+      ...prev,
+      width: newWidth,
+      height: newHeight,
+      position: newPosition
+    }) : null);
+
+    draw();
+  };
+
+  const handleNodeDragging = (e: React.MouseEvent) => {
+    const deltaX = (e.clientX - lastPosition!.x) / transform.scale;
+    const deltaY = (e.clientY - lastPosition!.y) / transform.scale;
+
+    const node = nodes.find(n => n.id === selectedNode);
+    if (node && selectedNode) {
+      onUpdateNode?.(selectedNode, {
+        x: node.position.x + deltaX,
+        y: node.position.y + deltaY
+      });
+    }
+
+    setLastPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCanvasDragging = (e: React.MouseEvent) => {
+    const deltaX = e.clientX - lastPosition!.x;
+    const deltaY = e.clientY - lastPosition!.y;
+
+    setTransform(prev => ({
+      ...prev,
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }));
+
+    setLastPosition({ x: e.clientX, y: e.clientY });
+  }
+
   const handleMouseDown = (e: React.MouseEvent) => {
     const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
 
     if (e.button === 1) {
-      setIsDragging(true);
-      setLastPosition({ x: e.clientX, y: e.clientY });
+      startCanvasDragging(e);
       return;
     }
 
     if (activeTool === ToolType.ERASER) {
-      const lineIndex = lines.findIndex(line => isPointOnLine(coords, line.points));
-      if (lineIndex !== -1) {
-        const removedLine = lines[lineIndex];
-        setLines(prev => prev.filter((_, index) => index !== lineIndex));
-
-        const newAction: Action = { type: ActionType.DELETE, line: removedLine };
-        addAction(newAction);
-        return;
-      }
-
-      const clickedNode = nodes.find(node => isPointInNode(coords, node));
-      if (clickedNode) {
-        onDeleteNode?.(clickedNode.id);
-      }
+      handleEraserAction(coords);
       return;
     }
 
     if (activeTool === ToolType.PENCIL) {
-      setDrawing(true);
-      const newLine: Line = {
-        points: [coords],
-        color: lineColor
-      };
-      setLines(prev => [...prev, newLine]);
-      smoothBrush.update(coords, { both: true });
-    } else if (nodeTypeToAdd) {
-      const newNode: NodeData = {
-        id: `${nodeTypeToAdd}-${Date.now()}`,
-        type: nodeTypeToAdd,
-        position: coords,
-        scale: 1,
-        width: 0,
-        height: 0
-      };
-      setNewNode(newNode);
-      setInitialPosition(coords);
-      setResizingNode(newNode.id);
-    } else {
-      const clickedNode = nodes.find(node => isPointInNode(coords, node));
-      if (clickedNode) {
-          setSelectedNode(clickedNode.id);
-          setIsDraggingNode(true);
-          setLastPosition({ x: e.clientX, y: e.clientY });
-          setInitialPosition(clickedNode.position);
-      } else {
-        if (activeTool === ToolType.ZOOM) {
-          const zoomFactor = e.shiftKey ? 0.9 : 1.1;
-          const newScale = transform.scale * zoomFactor;
+      startDrawing(coords);
+      return;
+    }
 
-          if (newScale < 0.1 || newScale > 3) return;
+    if (nodeTypeToAdd) {
+      startNodeCreation(coords);
+      return;
+    }
 
-          const scaleDiff = newScale - transform.scale;
-          const newX = transform.x - (coords.x * scaleDiff);
-          const newY = transform.y - (coords.y * scaleDiff);
+    const clickedNode = nodes.find(node => isPointInNode(coords, node));
+    if (clickedNode) {
+      startNodeDragging(e, clickedNode);
+      return;
+    }
 
-          setTransform({
-            x: newX,
-            y: newY,
-            scale: newScale
-          });
-        } else if (activeTool === ToolType.PAN) {
-          setIsDragging(true);
-          setLastPosition({ x: e.clientX, y: e.clientY });
-        } else if (onPlaceNode && nodeTypeToAdd) {
-          onPlaceNode(coords);
-        } else {
-          setIsDragging(true);
-          setLastPosition({ x: e.clientX, y: e.clientY });
-        }
-      }
+    handleToolSpecificActions(e, coords);
+  };
+
+  const startCanvasDragging = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setLastPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleEraserAction = (coords: Point) => {
+    const lineIndex = lines.findIndex(line => isPointOnLine(coords, line.points));
+    if (lineIndex !== -1) {
+      const removedLine = lines[lineIndex];
+      setLines(prev => prev.filter((_, index) => index !== lineIndex));
+
+      const newAction: Action = { type: ActionType.DELETE, line: removedLine };
+      addAction(newAction);
+      return;
+    }
+
+    const clickedNode = nodes.find(node => isPointInNode(coords, node));
+    if (clickedNode) {
+      onDeleteNode?.(clickedNode.id);
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!lastPosition && !drawing && !resizingNode && !newNode) return;
+  const startDrawing = (coords: Point) => {
+    setDrawing(true);
+    const newLine: Line = {
+      points: [coords],
+      color: lineColor
+    };
+    setLines(prev => [...prev, newLine]);
+    smoothBrush.update(coords, { both: true });
+  };
 
-    if (drawing) {
-      const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
-      smoothBrush.update(coords, { both: false, friction: 0.30 });
-      const brushCoords = smoothBrush.getBrushCoordinates();
+  const startNodeCreation = (coords: Point) => {
+    const newNode: NodeData = {
+      id: `${nodeTypeToAdd}-${Date.now()}`,
+      type: nodeTypeToAdd,
+      position: coords,
+      scale: 1,
+      width: 0,
+      height: 0
+    };
+    setNewNode(newNode);
+    setInitialPosition(coords);
+    setResizingNode(newNode.id);
+  };
 
-      setLines(prev => {
-        const newLines = [...prev];
-        const lastIndex = newLines.length - 1;
-        if (lastIndex >= 0) {
-          newLines[lastIndex] = {
-            ...newLines[lastIndex],
-            points: [...newLines[lastIndex].points, brushCoords]
-          };
+  const startNodeDragging = (e: React.MouseEvent, clickedNode: NodeData) => {
+    setSelectedNode(clickedNode.id);
+    setIsDraggingNode(true);
+    setLastPosition({ x: e.clientX, y: e.clientY });
+    setInitialPosition(clickedNode.position);
+  };
+
+  const handleToolSpecificActions = (e: React.MouseEvent, coords: Point) => {
+    switch (activeTool) {
+      case ToolType.ZOOM:
+        performZoom(e, coords);
+        break;
+      case ToolType.PAN:
+        startCanvasDragging(e);
+        break;
+      default:
+        if (onPlaceNode && nodeTypeToAdd) {
+          onPlaceNode(coords);
+        } else {
+          startCanvasDragging(e);
         }
-        return newLines;
-      });
-
-      draw();
-    } else if (resizingNode && initialPosition && newNode) {
-      const coords = getCanvasCoordinates(canvasRef.current!, e.clientX, e.clientY, transform);
-      const newWidth = Math.abs(coords.x - initialPosition.x);
-      const newHeight = Math.abs(coords.y - initialPosition.y);
-  
-      const newPosition = {
-        x: coords.x < initialPosition.x ? initialPosition.x - newWidth / 2 : initialPosition.x + newWidth / 2,
-        y: coords.y < initialPosition.y ? initialPosition.y - newHeight / 2 : initialPosition.y + newHeight / 2
-      };
-  
-      setNewNode({
-        ...newNode,
-        width: newWidth,
-        height: newHeight,
-        position: newPosition
-      });
-      draw();
-    } else if (isDraggingNode && selectedNode && lastPosition) {
-      const deltaX = (e.clientX - lastPosition.x) / transform.scale;
-      const deltaY = (e.clientY - lastPosition.y) / transform.scale;
-
-      const node = nodes.find(n => n.id === selectedNode);
-      if (node) {
-        onUpdateNode?.(selectedNode, {
-          x: node.position.x + deltaX,
-          y: node.position.y + deltaY
-        });
-      }
-
-      setLastPosition({ x: e.clientX, y: e.clientY });
-    } else if (isDragging && lastPosition) {
-      const deltaX = e.clientX - lastPosition.x;
-      const deltaY = e.clientY - lastPosition.y;
-
-      setTransform(prev => ({
-        ...prev,
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
-
-      setLastPosition({ x: e.clientX, y: e.clientY });
     }
+  };
+
+  const performZoom = (e: React.MouseEvent, coords: Point) => {
+    const zoomFactor = e.shiftKey ? 0.9 : 1.1;
+    const newScale = transform.scale * zoomFactor;
+
+    if (newScale < 0.1 || newScale > 3) return;
+
+    const scaleDiff = newScale - transform.scale;
+    const newX = transform.x - (coords.x * scaleDiff);
+    const newY = transform.y - (coords.y * scaleDiff);
+
+    setTransform({
+      x: newX,
+      y: newY,
+      scale: newScale
+    });
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (e.button === 1) {
-      setIsDragging(false);
-      setLastPosition(null);
+      resetCanvasDragging();
       return;
     }
-    if (drawing) {
-      setDrawing(false);
-      const lastLine = lines[lines.length - 1];
-      const newAction: Action = { type: ActionType.DRAW, line: lastLine };
-      addAction(newAction);
-    } else if (resizingNode && newNode) {
-      setNodes(prev => [...prev, newNode]);
-      setSelectedNode(newNode.id);
-      setResizingNode(null);
-      setInitialPosition(null);
 
-      const newAction: Action = { type: ActionType.ADD, node: newNode };
-      addAction(newAction);
-      setNewNode(null);
-    } else if (isDraggingNode && selectedNode && initialPosition) {
-      onMouseUp?.(selectedNode, initialPosition);
+    if (drawing) {
+      finishDrawing();
+      return;
     }
+
+    if (resizingNode && newNode) {
+      finalizeNodeCreation();
+      return;
+    }
+
+    if (isDraggingNode && selectedNode && initialPosition) {
+      handleNodeDragCompletion();
+    }
+
+    resetDraggingStates();
+  };
+
+  const resetCanvasDragging = () => {
+    setIsDragging(false);
+    setLastPosition(null);
+  };
+
+  const finishDrawing = () => {
+    setDrawing(false);
+    const lastLine = lines[lines.length - 1];
+    const newAction: Action = { 
+      type: ActionType.DRAW, 
+      line: lastLine 
+    };
+    addAction(newAction);
+  };
+
+  const finalizeNodeCreation = () => {
+    setNodes(prev => [...prev, newNode!]);
+    
+    setSelectedNode(newNode!.id);
+    
+    const newAction: Action = { 
+      type: ActionType.ADD, 
+      node: newNode! 
+    };
+    addAction(newAction);
+
+    setResizingNode(null);
+    setInitialPosition(null);
+    setNewNode(null);
+  };
+
+  const handleNodeDragCompletion = () => {
+    onMouseUp?.(selectedNode!, initialPosition!);
+  };
+
+  const resetDraggingStates = () => {
     setIsDragging(false);
     setIsDraggingNode(false);
     setLastPosition(null);

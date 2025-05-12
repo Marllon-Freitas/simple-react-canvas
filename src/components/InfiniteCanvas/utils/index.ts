@@ -42,6 +42,9 @@ export function getCursorStyle(
   nodeTypeToAdd: NodeType | null | undefined,
   activeTool: ToolType | null
 ): string {
+  if (activeTool === ToolType.SELECT) {
+    return 'pointer';
+  }
   if (nodeTypeToAdd === NodeType.SQUARE || nodeTypeToAdd === NodeType.CIRCLE || activeTool === ToolType.PENCIL) {
     return 'crosshair';
   }
