@@ -6,7 +6,6 @@ import { MenuDivider } from './components/MenuDivider';
 import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({
-  nodeTypeToAdd,
   onUndo,
   onRedo,
   onAddNode,
@@ -25,7 +24,6 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
         <ThemeToggleButton />
         <MenuDivider darkMode={isDarkMode} />
         <MenuItems
-          nodeTypeToAdd={nodeTypeToAdd}
           onAddNode={onAddNode}
           onSetActiveTool={onSetActiveTool}
           onUndo={onUndo}

@@ -2,16 +2,16 @@ import { useCallback, useEffect } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
 import { Action, ActionType, NodeType, Point, ToolType } from "./types";
 import { useHistory } from "./hooks/useHistory";
-import { useNodes } from "./hooks/useNodes";
 import FloatingToolsDetailsMenu from "./components/FloatingToolsDetailsMenu";
 import FloatingMenu from "./components/FloatingMenu";
 import { useCanvasToolsContext } from "./contexts/CanvasToolsContext/useCanvasToolsContext";
+import { useNodesContext } from "./contexts/NodesContext/useNodesContext";
 
 function App() {
   const { setActiveTool, setLines } = useCanvasToolsContext();
 
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
-  const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
+  const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodesContext();
 
   const handleAddNode = useCallback((type: NodeType) => {
     setNodeTypeToAdd(type);
@@ -131,7 +131,6 @@ function App() {
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
-        nodeTypeToAdd={nodeTypeToAdd}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onAddNode={handleAddNode}
@@ -139,13 +138,10 @@ function App() {
       />
       <FloatingToolsDetailsMenu />
       <InfiniteCanvas
-        nodes={nodes} 
         onUpdateNode={handleUpdateNode}
         onPlaceNode={handlePlaceNode}
         onDeleteNode={handleDeleteNode}
-        nodeTypeToAdd={nodeTypeToAdd}
         onMouseUp={handleMouseUp}
-        setNodes={setNodes}
         addAction={addAction}
       />
     </div>

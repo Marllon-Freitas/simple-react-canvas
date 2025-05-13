@@ -3,9 +3,9 @@ import { Square, Circle, Pencil, Eraser, Move, ZoomIn, Undo, Redo, Settings, Mou
 import { MenuItem, NodeType, ToolType } from '../../../types';
 import { useThemeContext } from '../../../contexts/ThemeContext/useThemeContext';
 import { useCanvasToolsContext } from '../../../contexts/CanvasToolsContext/useCanvasToolsContext';
+import { useNodesContext } from '../../../contexts/NodesContext/useNodesContext';
 
 interface MenuItemsProps {
-  nodeTypeToAdd?: NodeType | null;
   onAddNode?: (type: NodeType) => void;
   onSetActiveTool?: (tool: ToolType | null) => void;
   onUndo?: () => void;
@@ -13,7 +13,6 @@ interface MenuItemsProps {
 }
 
 export const MenuItems: React.FC<MenuItemsProps> = ({
-  nodeTypeToAdd,
   onAddNode = () => {},
   onSetActiveTool = () => {},
   onUndo = () => {},
@@ -21,7 +20,8 @@ export const MenuItems: React.FC<MenuItemsProps> = ({
 }) => {
   const { activeTool } = useCanvasToolsContext();
   const { isDarkMode } = useThemeContext();
-  
+  const { nodeTypeToAdd } = useNodesContext();
+
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
       {

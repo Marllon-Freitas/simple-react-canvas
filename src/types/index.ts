@@ -52,7 +52,6 @@ export interface MenuItem {
 
 export interface FloatingMenuProps {
   onAddNode: (type: NodeType) => void;
-  nodeTypeToAdd: NodeType | null;
   onSetActiveTool: (tool: ToolType | null) => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -66,13 +65,10 @@ export interface Action {
 }
 
 export interface InfiniteCanvasProps {
-  nodes: NodeData[];
-  nodeTypeToAdd: NodeType | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
-  setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
   addAction: (action: Action) => void;
 }
 
