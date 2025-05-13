@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Action, ActionType, InfiniteCanvasProps, Line, NodeData, Point, ToolType, Transform } from '../../types';
 import SmoothBrush from '../../utils/SmoothBrush';
 import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
+import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
 
-const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ 
-  darkMode = false, 
+const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   nodes,
   onUpdateNode,
   onPlaceNode,
@@ -19,6 +19,8 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   lineColor,
   lineWidth
 }) => {
+  const { isDarkMode } = useThemeContext();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -34,9 +36,9 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const smoothBrush = useRef(new SmoothBrush({ radius: 3 })).current;
 
   const colors = {
-    background: darkMode ? '#1a1a1a' : '#ffffff',
-    grid: darkMode ? '#333333' : '#dddddd',
-    axes: darkMode ? '#404040' : '#cccccc'
+    background: isDarkMode ? '#1a1a1a' : '#ffffff',
+    grid: isDarkMode ? '#333333' : '#dddddd',
+    axes: isDarkMode ? '#404040' : '#cccccc'
   };
   
   const transformColorForTheme = (color: string, darkMode: boolean): string => {
@@ -63,10 +65,10 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     setLines((prevLines) =>
       prevLines.map((line) => ({
         ...line,
-        color: transformColorForTheme(line.color, darkMode),
+        color: transformColorForTheme(line.color, isDarkMode),
       }))
     );
-  }, [darkMode, setLines]);
+  }, [isDarkMode, setLines]);
 
   const drawGrid = useCallback(() => {
     if (!context || !canvasRef.current) return;
@@ -148,7 +150,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     drawGrid();
 
     nodes.forEach(node => {
-      drawNode(context, node, darkMode, selectedNode);
+      drawNode(context, node, isDarkMode, selectedNode);
     });
 
     lines.forEach(line => {
@@ -156,12 +158,12 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     });
 
     if (newNode) {
-      drawNodePrevOutline(context, newNode, darkMode);
+      drawNodePrevOutline(context, newNode, isDarkMode);
     }
 
     context.restore();
   }, 
-  [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, lines, newNode, darkMode, selectedNode, drawSmoothLine]);
+  [context, colors.background, transform.x, transform.y, transform.scale, drawGrid, nodes, lines, newNode, isDarkMode, selectedNode, drawSmoothLine]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -222,7 +224,7 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (!context) return;
     draw();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [context, transform, darkMode, nodes, selectedNode, lines, lineColor]);
+  }, [context, transform, isDarkMode, nodes, selectedNode, lines, lineColor]);
   
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!canvasRef.current || !context) return;

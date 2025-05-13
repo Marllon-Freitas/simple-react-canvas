@@ -51,8 +51,6 @@ export interface MenuItem {
 }
 
 export interface FloatingMenuProps {
-  darkMode: boolean;
-  onThemeToggle: () => void;
   activeTool: ToolType | null;
   onAddNode: (type: NodeType) => void;
   nodeTypeToAdd: NodeType | null;
@@ -69,7 +67,6 @@ export interface Action {
 }
 
 export interface InfiniteCanvasProps {
-  darkMode?: boolean;
   nodes: NodeData[];
   nodeTypeToAdd: NodeType | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;

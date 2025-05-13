@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
 import { Action, ActionType, NodeType, Point, ToolType } from "./types";
-import { useThemeMode } from "./hooks/useThemeMode";
 import { useHistory } from "./hooks/useHistory";
 import { useNodes } from "./hooks/useNodes";
 import { useCanvasTools } from "./hooks/useCanvasTools";
@@ -9,7 +8,6 @@ import FloatingToolsDetailsMenu from "./components/FloatingToolsDetailsMenu";
 import FloatingMenu from "./components/FloatingMenu";
 
 function App() {
-  const { isDarkMode, toggleTheme } = useThemeMode();
   const { activeTool, setActiveTool, lines, setLines, lineColor, setLineColor, lineWidth, setLineWidth} = useCanvasTools();
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
@@ -139,8 +137,6 @@ function App() {
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
-        darkMode={isDarkMode}
-        onThemeToggle={toggleTheme}
         activeTool={activeTool}
         nodeTypeToAdd={nodeTypeToAdd}
         {...actions}
@@ -149,11 +145,9 @@ function App() {
         activeTool={activeTool}
         lineColor={lineColor}
         setLineColor={setLineColor}
-        isDarkMode={isDarkMode}
         setLineWidth={setLineWidth}
       />
-      <InfiniteCanvas 
-        darkMode={isDarkMode} 
+      <InfiniteCanvas
         nodes={nodes} 
         onUpdateNode={handleUpdateNode}
         onPlaceNode={handlePlaceNode}

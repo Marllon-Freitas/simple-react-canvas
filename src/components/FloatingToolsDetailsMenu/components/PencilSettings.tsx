@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import { useThemeContext } from '../../../contexts/ThemeContext/useThemeContext';
 
 interface PencilSettingsProps {
   lineColor: string;
   setLineColor: (color: string) => void;
-  isDarkMode: boolean;
   setLineWidth: (width: number) => void;
 }
 
 export const PencilSettings: React.FC<PencilSettingsProps> = ({
   lineColor,
   setLineColor,
-  isDarkMode,
   setLineWidth
 }) => {
+  const { isDarkMode } = useThemeContext();
+  
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [selectedWidthIndex, setSelectedWidthIndex] = useState(0);
 
@@ -69,7 +70,9 @@ export const PencilSettings: React.FC<PencilSettingsProps> = ({
     <div className="w-full">
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2 text-white">Selected color</label>
+          <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            Line Color
+          </label>
           <div className="w-full h-16 rounded-md flex items-center justify-center" style={{ backgroundColor: lineColor }}>
             <span className={`font-mono ${isDarkMode && lineColor === '#FFFFFF' ? 'text-black' : lineColor === '#000000' ? 'text-white' : ''}`}>
               {lineColor}

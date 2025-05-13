@@ -1,21 +1,18 @@
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { useThemeContext } from '../../../contexts/ThemeContext/useThemeContext';
 
-interface ThemeToggleButtonProps {
-  darkMode: boolean;
-  onToggle: () => void;
-}
-
-const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({ darkMode, onToggle }) => {
+const ThemeToggleButton: React.FC = () => {
+  const { isDarkMode, toggleTheme } = useThemeContext();
   return (
     <button
-      onClick={onToggle}
+      onClick={toggleTheme}
       className={`p-2 rounded-lg transition-colors
-        ${darkMode 
+        ${isDarkMode 
           ? 'hover:bg-white/10 text-white' 
           : 'hover:bg-black/10 text-black'}`}
     >
-      {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+      {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
     </button>
   );
 };
