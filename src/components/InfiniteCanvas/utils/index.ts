@@ -1,4 +1,4 @@
-import { Point, Transform, NodeData, NodeType, ToolType } from '../../../types';
+import { Point, Transform, NodeData, NodeType, ToolType, Line } from '../../../types';
 
 export function getCanvasCoordinates(
   canvas: HTMLCanvasElement, 
@@ -142,4 +142,15 @@ export const isPointOnLine = (point: Point, line: Point[], threshold: number = 2
     }
   }
   return false;
+};
+
+export const findLineAtPosition = (point: Point, lines: Line[], transform: Transform): number => {
+  const threshold = 5 / transform.scale;
+  
+  for (let i = 0; i < lines.length; i++) {
+    if (isPointOnLine(point, lines[i].points, threshold)) {
+      return i;
+    }
+  }
+  return -1;
 };

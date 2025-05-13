@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Action, ActionType, InfiniteCanvasProps, Line, NodeData, Point, ToolType, Transform } from '../../types';
 import SmoothBrush from '../../utils/SmoothBrush';
-import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
+import { drawNode, drawNodePrevOutline, findLineAtPosition, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
 import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
 import { useCanvasToolsContext } from '../../contexts/CanvasToolsContext/useCanvasToolsContext';
 import { useNodesContext } from '../../contexts/NodesContext/useNodesContext';
@@ -25,12 +25,16 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [lastPosition, setLastPosition] = useState<Point | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const [isDraggingLine, setIsDraggingLine] = useState(false);
+  const [originalLine, setOriginalLine] = useState<Line | null>(null);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   const [initialPosition, setInitialPosition] = useState<Point | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [resizingNode, setResizingNode] = useState<string | null>(null);
   const [newNode, setNewNode] = useState<NodeData | null>(null);
   const smoothBrush = useRef(new SmoothBrush({ radius: 3 })).current;
+  const [initialLinePoints, setInitialLinePoints] = useState<Point[] | null>(null);
 
   const colors = {
     background: isDarkMode ? '#1a1a1a' : '#ffffff',
@@ -222,7 +226,30 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     draw();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context, transform, isDarkMode, nodes, selectedNode, lines, lineColor]);
-  
+
+  const handleLineDragging = (e: React.MouseEvent) => {
+    if (!canvasRef.current || selectedLine === null || !lastPosition || !initialLinePoints) return;
+    
+    const totalDeltaX = (e.clientX - lastPosition.x) / transform.scale;
+    const totalDeltaY = (e.clientY - lastPosition.y) / transform.scale;
+    
+    setLines(prev => {
+      const newLines = [...prev];
+      
+      const newPoints = initialLinePoints.map(point => ({
+        x: point.x + totalDeltaX,
+        y: point.y + totalDeltaY
+      }));
+      
+      newLines[selectedLine] = {
+        ...newLines[selectedLine],
+        points: newPoints
+      };
+      
+      return newLines;
+    });
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!canvasRef.current || !context) return;
 
@@ -235,6 +262,11 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
 
     if (resizingNode && initialPosition && newNode) {
       handleNodeResizing(coords);
+      return;
+    }
+
+    if (isDraggingLine && selectedLine !== null && lastPosition) {
+      handleLineDragging(e);
       return;
     }
 
@@ -324,6 +356,30 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (e.button === 1) {
       startCanvasDragging(e);
       return;
+    }
+
+    if (activeTool === ToolType.SELECT) {
+      const clickedNode = nodes.find(node => isPointInNode(coords, node));
+      if (clickedNode) {
+        startNodeDragging(e, clickedNode);
+        return;
+      }
+      
+      const lineIndex = findLineAtPosition(coords, lines, transform);
+      if (lineIndex !== -1) {
+        const deepCopyLine = {
+          points: lines[lineIndex].points.map(p => ({ x: p.x, y: p.y })),
+          color: lines[lineIndex].color,
+          width: lines[lineIndex].width
+        };
+        
+        setOriginalLine(deepCopyLine);
+        setSelectedLine(lineIndex);
+        setIsDraggingLine(true);
+        setLastPosition({ x: e.clientX, y: e.clientY });
+        setInitialLinePoints([...lines[lineIndex].points.map(p => ({ x: p.x, y: p.y }))]);
+        return;
+      }
     }
 
     if (activeTool === ToolType.ERASER) {
@@ -458,7 +514,30 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       handleNodeDragCompletion();
     }
 
+    if (isDraggingLine && selectedLine !== null) {
+      handleLineDragCompletion();
+    }
+
     resetDraggingStates();
+  };
+
+  const handleLineDragCompletion = () => {
+    if (originalLine && selectedLine !== null) {
+      const currentLine = lines[selectedLine];
+      
+      const newAction: Action = { 
+        type: ActionType.UPDATE, 
+        line: { ...currentLine },
+        previousLine: originalLine,
+        lineIndex: selectedLine
+      };
+      addAction(newAction);
+      
+      setOriginalLine(null);
+    }
+    
+    setIsDraggingLine(false);
+    setLastPosition(null);
   };
 
   const resetCanvasDragging = () => {

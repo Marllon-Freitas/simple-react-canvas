@@ -62,6 +62,8 @@ export interface Action {
   node?: NodeData;
   line?: Line;
   previousPosition?: Point;
+  previousLine?: Line;
+  lineIndex?: number;
 }
 
 export interface InfiniteCanvasProps {

@@ -9,9 +9,8 @@ import { useNodesContext } from "./contexts/NodesContext/useNodesContext";
 
 function App() {
   const { setActiveTool, setLines } = useCanvasToolsContext();
-
-  const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodesContext();
+  const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
 
   const handleAddNode = useCallback((type: NodeType) => {
     setNodeTypeToAdd(type);
@@ -53,11 +52,19 @@ function App() {
         setNodes(prev => prev.filter(node => node.id !== action.node!.id));
         break;
       case 'update':
-        setNodes(prev => prev.map(node => 
-          node.id === action.node!.id 
-            ? { ...node, position: action.previousPosition! }
-            : node
-        ));
+        if (action.node) {
+          setNodes(prev => prev.map(node => 
+            node.id === action.node!.id 
+              ? { ...node, position: action.previousPosition! }
+              : node
+          ));
+        } else if (action.line && action.previousLine && action.lineIndex !== undefined) {
+          setLines(prev => {
+            const newLines = [...prev];
+            if (action.previousLine) newLines[action.lineIndex!] = action.previousLine;
+            return newLines;
+          });
+        }
         break;
       case 'delete':
         if (action.node) {
@@ -83,11 +90,19 @@ function App() {
         setNodes(prev => [...prev, action.node!]);
         break;
       case 'update':
-        setNodes(prev => prev.map(node => 
-          node.id === action.node!.id 
-            ? { ...node, position: action.node!.position }
-            : node
-        ));
+        if (action.node) {
+          setNodes(prev => prev.map(node => 
+            node.id === action.node!.id 
+              ? { ...node, position: action.node!.position }
+              : node
+          ));
+        } else if (action.line && action.lineIndex !== undefined) {
+          setLines(prev => {
+            const newLines = [...prev];
+            if (action.line) newLines[action.lineIndex!] = action.line;
+            return newLines;
+          });
+        }
         break;
       case 'delete':
         if (action.node) {
