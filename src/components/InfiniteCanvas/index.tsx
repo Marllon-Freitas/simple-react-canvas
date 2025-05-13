@@ -3,6 +3,7 @@ import { Action, ActionType, InfiniteCanvasProps, Line, NodeData, Point, ToolTyp
 import SmoothBrush from '../../utils/SmoothBrush';
 import { drawNode, drawNodePrevOutline, getCanvasCoordinates, getCursorStyle, isPointInNode, isPointOnLine } from './utils';
 import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
+import { useCanvasToolsContext } from '../../contexts/CanvasToolsContext/useCanvasToolsContext';
 
 const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   nodes,
@@ -10,16 +11,13 @@ const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   onPlaceNode,
   onDeleteNode,
   nodeTypeToAdd,
-  activeTool,
   onMouseUp,
-  lines,
-  setLines,
   setNodes,
-  addAction,
-  lineColor,
-  lineWidth
+  addAction
 }) => {
   const { isDarkMode } = useThemeContext();
+  const { activeTool, lines, setLines, lineColor, lineWidth} = useCanvasToolsContext();
+  
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   

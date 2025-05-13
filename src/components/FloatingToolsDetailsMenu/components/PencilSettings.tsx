@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useThemeContext } from '../../../contexts/ThemeContext/useThemeContext';
+import { useCanvasToolsContext } from '../../../contexts/CanvasToolsContext/useCanvasToolsContext';
 
-interface PencilSettingsProps {
-  lineColor: string;
-  setLineColor: (color: string) => void;
-  setLineWidth: (width: number) => void;
-}
-
-export const PencilSettings: React.FC<PencilSettingsProps> = ({
-  lineColor,
-  setLineColor,
-  setLineWidth
-}) => {
+export const PencilSettings: React.FC = () => {
   const { isDarkMode } = useThemeContext();
+  const { lineColor, setLineColor, setLineWidth } = useCanvasToolsContext();
   
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [selectedWidthIndex, setSelectedWidthIndex] = useState(0);

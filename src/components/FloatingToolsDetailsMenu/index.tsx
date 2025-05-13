@@ -3,21 +3,12 @@ import { ToolType } from '../../types';
 import { PencilSettings } from './components/PencilSettings';
 import { EraserSettings } from './components/EraserSettings';
 import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
+import { useCanvasToolsContext } from '../../contexts/CanvasToolsContext/useCanvasToolsContext';
 
-interface FloatingToolsDetailsMenuProps {
-  activeTool: ToolType | null;
-  lineColor: string;
-  setLineColor: (color: string) => void;
-  setLineWidth: (width: number) => void;
-}
-
-const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
-  activeTool,
-  lineColor,
-  setLineColor,
-  setLineWidth,
-}) => {
+const FloatingToolsDetailsMenu: React.FC = () => {
   const { isDarkMode } = useThemeContext();
+  const { activeTool } = useCanvasToolsContext();
+
   if (!activeTool || activeTool !== ToolType.PENCIL && activeTool !== ToolType.ERASER) return null;
 
   return (
@@ -33,11 +24,7 @@ const FloatingToolsDetailsMenu: React.FC<FloatingToolsDetailsMenuProps> = ({
       </h3>
 
       {activeTool === ToolType.PENCIL && (
-        <PencilSettings 
-          lineColor={lineColor} 
-          setLineColor={setLineColor}
-          setLineWidth={setLineWidth}
-        />
+        <PencilSettings />
       )}
 
       {activeTool === ToolType.ERASER && <EraserSettings />}

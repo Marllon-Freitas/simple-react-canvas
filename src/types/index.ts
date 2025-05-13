@@ -51,7 +51,6 @@ export interface MenuItem {
 }
 
 export interface FloatingMenuProps {
-  activeTool: ToolType | null;
   onAddNode: (type: NodeType) => void;
   nodeTypeToAdd: NodeType | null;
   onSetActiveTool: (tool: ToolType | null) => void;
@@ -71,15 +70,10 @@ export interface InfiniteCanvasProps {
   nodeTypeToAdd: NodeType | null;
   onUpdateNode?: (nodeId: string, newPosition: Point) => void;
   onPlaceNode?: (position: Point) => void;
-  activeTool: ToolType | null;
   onMouseUp?: (nodeId: string, previousPosition: Point) => void;
   onDeleteNode?: (nodeId: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<NodeData[]>>;
-  lines: Line[];
-  setLines: React.Dispatch<React.SetStateAction<Line[]>>;
   addAction: (action: Action) => void;
-  lineColor: string;
-  lineWidth: number;
 }
 
 export interface SmoothBrushOptions {

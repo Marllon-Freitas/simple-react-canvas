@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import InfiniteCanvas from "./components/InfiniteCanvas"
 import { Action, ActionType, NodeType, Point, ToolType } from "./types";
 import { useHistory } from "./hooks/useHistory";
 import { useNodes } from "./hooks/useNodes";
-import { useCanvasTools } from "./hooks/useCanvasTools";
 import FloatingToolsDetailsMenu from "./components/FloatingToolsDetailsMenu";
 import FloatingMenu from "./components/FloatingMenu";
+import { useCanvasToolsContext } from "./contexts/CanvasToolsContext/useCanvasToolsContext";
 
 function App() {
-  const { activeTool, setActiveTool, lines, setLines, lineColor, setLineColor, lineWidth, setLineWidth} = useCanvasTools();
+  const { setActiveTool, setLines } = useCanvasToolsContext();
+
   const { history, historyIndex, addAction, setHistoryIndex } = useHistory();
   const { nodes, setNodes, nodeTypeToAdd, setNodeTypeToAdd, addNode, updateNode, deleteNode } = useNodes();
 
@@ -127,40 +128,25 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyIndex, history]);
 
-  const actions = useMemo(() => ({
-    onUndo: handleUndo,
-    onRedo: handleRedo,
-    onAddNode: handleAddNode,
-    onSetActiveTool: handleSetActiveTool,
-  }), [handleUndo, handleRedo, handleAddNode, handleSetActiveTool]);
-
   return (
     <div className="w-screen h-screen">
       <FloatingMenu
-        activeTool={activeTool}
         nodeTypeToAdd={nodeTypeToAdd}
-        {...actions}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onAddNode={handleAddNode}
+        onSetActiveTool={handleSetActiveTool}
       />
-      <FloatingToolsDetailsMenu
-        activeTool={activeTool}
-        lineColor={lineColor}
-        setLineColor={setLineColor}
-        setLineWidth={setLineWidth}
-      />
+      <FloatingToolsDetailsMenu />
       <InfiniteCanvas
         nodes={nodes} 
         onUpdateNode={handleUpdateNode}
         onPlaceNode={handlePlaceNode}
         onDeleteNode={handleDeleteNode}
         nodeTypeToAdd={nodeTypeToAdd}
-        activeTool={activeTool}
         onMouseUp={handleMouseUp}
-        lines={lines}
-        setLines={setLines}
         setNodes={setNodes}
         addAction={addAction}
-        lineColor={lineColor}
-        lineWidth={lineWidth}
       />
     </div>
   );

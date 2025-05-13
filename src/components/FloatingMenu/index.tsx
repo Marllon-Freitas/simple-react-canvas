@@ -6,11 +6,14 @@ import { MenuDivider } from './components/MenuDivider';
 import { useThemeContext } from '../../contexts/ThemeContext/useThemeContext';
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({
-  activeTool,
   nodeTypeToAdd,
-  ...actions
+  onUndo,
+  onRedo,
+  onAddNode,
+  onSetActiveTool
 }) => {
   const { isDarkMode } = useThemeContext();
+
   return (
     <div
       className={`fixed top-6 left-1/2 -translate-x-1/2 px-2 py-1.5 rounded-xl
@@ -22,9 +25,11 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
         <ThemeToggleButton />
         <MenuDivider darkMode={isDarkMode} />
         <MenuItems
-          activeTool={activeTool}
           nodeTypeToAdd={nodeTypeToAdd}
-          {...actions}
+          onAddNode={onAddNode}
+          onSetActiveTool={onSetActiveTool}
+          onUndo={onUndo}
+          onRedo={onRedo}
         />
       </div>
     </div>

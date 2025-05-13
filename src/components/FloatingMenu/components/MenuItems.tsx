@@ -2,9 +2,9 @@ import React from 'react';
 import { Square, Circle, Pencil, Eraser, Move, ZoomIn, Undo, Redo, Settings, MousePointer } from 'lucide-react';
 import { MenuItem, NodeType, ToolType } from '../../../types';
 import { useThemeContext } from '../../../contexts/ThemeContext/useThemeContext';
+import { useCanvasToolsContext } from '../../../contexts/CanvasToolsContext/useCanvasToolsContext';
 
 interface MenuItemsProps {
-  activeTool?: ToolType | null;
   nodeTypeToAdd?: NodeType | null;
   onAddNode?: (type: NodeType) => void;
   onSetActiveTool?: (tool: ToolType | null) => void;
@@ -13,14 +13,15 @@ interface MenuItemsProps {
 }
 
 export const MenuItems: React.FC<MenuItemsProps> = ({
-  activeTool,
   nodeTypeToAdd,
   onAddNode = () => {},
   onSetActiveTool = () => {},
   onUndo = () => {},
   onRedo = () => {}
 }) => {
+  const { activeTool } = useCanvasToolsContext();
   const { isDarkMode } = useThemeContext();
+  
   const menuItems: Record<string, MenuItem[]> = {
     draw: [
       {
